@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Easy Reading Listener - DRA Level ~1 Starter</title>
+  <title>Easy Reading Listener - Progressive DRA Levels</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -14,6 +14,12 @@
       text-align: center;
     }
     h1 { color: #2c3e50; }
+    #level-info {
+      font-size: 1.4em;
+      font-weight: bold;
+      margin: 15px 0;
+      color: #3498db;
+    }
     #passage {
       font-size: 1.6em;
       line-height: 1.5;
@@ -29,6 +35,15 @@
       color: #555;
       margin: 20px 0;
       min-height: 60px;
+    }
+    #feedback {
+      font-size: 1.4em;
+      line-height: 1.5;
+      margin: 20px 0;
+      padding: 15px;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 8px;
     }
     #accuracy {
       font-size: 1.8em;
@@ -53,15 +68,20 @@
     .success { color: #27ae60; }
     .error { color: #e74c3c; }
     #status { font-size: 1.2em; margin: 15px 0; font-weight: bold; }
+    .correct { color: #27ae60; font-weight: bold; }
+    .incorrect { color: #e74c3c; text-decoration: line-through; }
+    .inserted { color: #f39c12; font-style: italic; }
   </style>
 </head>
 <body>
 
   <h1>Easy Reading Listener</h1>
-  <p>Read the passage out loud clearly. The app will listen and tell you how accurate you were!</p>
+  <p>Read the passage out loud clearly. The app will listen, show what you said with colors (green=correct, red=wrong/missing, orange=extra), and tell you how accurate you were! Advance after two great reads (90%+) in a row. Higher levels have more passages and trickier words.</p>
 
+  <div id="level-info"></div>
   <div id="passage"></div>
   <div id="transcript">Your reading will appear here...</div>
+  <div id="feedback">Word feedback will show here after reading.</div>
   <div id="accuracy"></div>
   <div id="status">Ready to start!</div>
 
@@ -69,71 +89,145 @@
   <button id="stop">Stop Listening</button>
 
   <script>
-    // === Passages (very easy DRA ~1 style, short sentences, some repeated tricky words) ===
-    const passages = [
-      "The cat sat on the mat. The cat is fat.",
-      "Sam and Pam run. They run to the van.",
-      "I see the dog. The dog can dig. Dig, dog, dig!",
-      "Mom said, 'Come here.' I said, 'Yes, Mom.'",
-      "The big pig is in the pen. The pen is red.",
-      "We go to the lake. We like to swim and play.",
-      "Tim has a hat. The hat is on Tim's head.",
-      "Look at the sun. The sun is hot today."
+    // === Levels with Stories: Each level is a connected story broken into passages. Higher levels have more passages, longer sentences, and trickier words (e.g., sight words like "said", "was", "they", "because", irregulars like "friend") ===
+    const levels = [
+      // Level 1 (DRA ~1-4): 4 passages, very simple, short sentences, basic sight words.
+      [
+        "The cat sat on the mat. The cat was fat. He said, 'Meow!'",
+        "Sam saw the cat. Sam ran to the van. 'Look!' said Sam.",
+        "The dog was big. The dog can dig. Dig, dog!",
+        "Mom said, 'Come here.' They said, 'Yes.' The cat was happy."
+      ],
+      // Level 2 (DRA ~6-8): 5 passages, slightly longer, more repetition of tricky words like "they", "said".
+      [
+        "The farm has a pig. The pig was in the pen. The pen was red. 'Oink!' said the pig.",
+        "They went to the lake. They like to swim. The dog was with them. He said, 'Woof!'",
+        "Tim has a hat. The hat was blue. He put it on his head. 'Look at me!' said Tim.",
+        "The sun was hot today. They sat by the tree. The tree was big and green.",
+        "All the friends play. They run and jump. 'This is fun!' they said together."
+      ],
+      // Level 3 (DRA ~10-12): 6 passages, more narrative, words like "because", "friend".
+      [
+        "Anna has a friend. Her friend is Ben. They like to play ball because it is fun.",
+        "One day, they went to the park. The park was green. They saw a bird. The bird said, 'Tweet!'",
+        "Ben kicked the ball. It went far. Anna ran to get it. 'Good kick!' she said.",
+        "They sat on the grass. The grass was soft. They ate apples because they were hungry.",
+        "A dog came over. The dog was friendly. They pet the dog. 'Nice dog,' said Ben.",
+        "At the end of the day, they went home. 'See you tomorrow,' said Anna to her friend."
+      ],
+      // Level 4 (DRA ~14-16): 7 passages, building complexity, more descriptive, tricky words like "thought", "through".
+      [
+        "Jack and his sister Lily wanted to build a fort. They thought it would be fun.",
+        "They found old boxes in the garage. The boxes were big. They carried them outside.",
+        "Lily said, 'Let's put them here.' They stacked the boxes high. It looked like a house.",
+        "Jack went through the door. 'This is cool!' he said. Lily laughed because it was wobbly.",
+        "They added a blanket on top. The blanket was soft and blue. Now it was cozy inside.",
+        "Their dog Spot came in. Spot wagged his tail. 'You can stay,' said Jack to Spot.",
+        "When it was done, they played all day. 'Best fort ever!' thought Lily as they smiled."
+      ],
+      // Level 5 (DRA ~18-20): 8 passages, fuller story, varied vocabulary, common error words like "where", "were".
+      [
+        "Sara and her family went on a trip. They were excited to see the ocean for the first time.",
+        "They packed bags with clothes and snacks. 'Where is my hat?' asked Sara. Mom found it.",
+        "In the car, they sang songs. The road was long, but they were happy. Dad said, 'Almost there!'",
+        "At the beach, the sand was warm. Waves crashed on the shore. 'Look at that!' Sara said.",
+        "They built a sandcastle. It had towers and a moat. Seagulls flew overhead, calling loudly.",
+        "Sara found a shell. It was pink and shiny. 'This is special,' she thought. She kept it.",
+        "They swam in the water. It was cool and salty. 'Be careful,' Mom said as they splashed.",
+        "As the sun set, they went home. 'What a great day,' said Sara. They were tired but joyful."
+      ]
     ];
 
+    const levelNames = [
+      "Level 1: Very Easy (DRA ~1-4)",
+      "Level 2: Easy (DRA ~6-8)",
+      "Level 3: Medium (DRA ~10-12)",
+      "Level 4: Challenging (DRA ~14-16)",
+      "Level 5: Advanced (DRA ~18-20)"
+    ];
+
+    let currentLevel = 0;
     let currentIndex = 0;
     let consecutiveSuccess = 0;
     let recognition;
     let isListening = false;
 
+    const levelInfoEl = document.getElementById("level-info");
     const passageEl = document.getElementById("passage");
     const transcriptEl = document.getElementById("transcript");
+    const feedbackEl = document.getElementById("feedback");
     const accuracyEl = document.getElementById("accuracy");
     const statusEl = document.getElementById("status");
     const startBtn = document.getElementById("start");
     const stopBtn = document.getElementById("stop");
 
-    // Show first passage
+    // Show current passage
     function loadPassage() {
-      if (currentIndex >= passages.length) {
-        passageEl.innerHTML = "<strong>Great job! You've finished all the passages! 🎉</strong>";
+      if (currentLevel >= levels.length) {
+        passageEl.innerHTML = "<strong>Amazing! You've completed all levels! 🎉</strong>";
         startBtn.disabled = true;
         return;
       }
-      passageEl.textContent = passages[currentIndex];
+      const currentPassages = levels[currentLevel];
+      if (currentIndex >= currentPassages.length) {
+        statusEl.textContent = "Level complete! Moving to next level... ↑";
+        currentLevel++;
+        currentIndex = 0;
+        consecutiveSuccess = 0;
+        setTimeout(loadPassage, 1800);
+        return;
+      }
+      levelInfoEl.textContent = `${levelNames[currentLevel]} - Passage ${currentIndex + 1} of ${currentPassages.length}`;
+      passageEl.textContent = currentPassages[currentIndex];
       transcriptEl.textContent = "";
+      feedbackEl.innerHTML = "Word feedback will show here after reading.";
       accuracyEl.textContent = "";
-      statusEl.textContent = "Read this passage now...";
+      statusEl.textContent = "Read this part of the story now...";
     }
 
     loadPassage();
 
-    // Simple word-level accuracy (ignores punctuation & case)
-    function calculateAccuracy(expected, spoken) {
+    // Enhanced accuracy with word-level feedback (simple alignment)
+    function getWordFeedback(expected, spoken) {
       const expectedWords = expected.toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/).filter(w => w);
       const spokenWords = spoken.toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/).filter(w => w);
 
-      if (spokenWords.length === 0) return 0;
-
+      let feedbackHTML = '';
       let correct = 0;
       let i = 0, j = 0;
-      while (i < expectedWords.length && j < spokenWords.length) {
-        if (expectedWords[i] === spokenWords[j]) {
+
+      while (i < expectedWords.length || j < spokenWords.length) {
+        if (i < expectedWords.length && j < spokenWords.length && expectedWords[i] === spokenWords[j]) {
+          feedbackHTML += `<span class="correct">${expectedWords[i]}</span> `;
           correct++;
           i++;
           j++;
+        } else if (i < expectedWords.length && (j >= spokenWords.length || (i + 1 < expectedWords.length && expectedWords[i + 1] === spokenWords[j]))) {
+          // Missing word in spoken
+          feedbackHTML += `<span class="incorrect">${expectedWords[i]}</span> `;
+          i++;
+        } else if (j < spokenWords.length && (i >= expectedWords.length || (j + 1 < spokenWords.length && expectedWords[i] === spokenWords[j + 1]))) {
+          // Extra word in spoken
+          feedbackHTML += `<span class="inserted">${spokenWords[j]}</span> `;
+          j++;
         } else {
-          // Simple skip one for minor insertions/deletions (approximation)
-          if (i + 1 < expectedWords.length && expectedWords[i + 1] === spokenWords[j]) i++;
-          else if (j + 1 < spokenWords.length && expectedWords[i] === spokenWords[j + 1]) j++;
-          else { i++; j++; }
+          // Mismatch
+          if (i < expectedWords.length) {
+            feedbackHTML += `<span class="incorrect">${expectedWords[i]}</span> `;
+            i++;
+          }
+          if (j < spokenWords.length) {
+            feedbackHTML += `<span class="inserted">${spokenWords[j]}</span> `;
+            j++;
+          }
         }
       }
 
-      return Math.round((correct / expectedWords.length) * 100);
+      const accuracy = expectedWords.length > 0 ? Math.round((correct / expectedWords.length) * 100) : 0;
+      return { accuracy, feedbackHTML: feedbackHTML.trim() };
     }
 
-    // Web Speech API setup (works best in Chrome/Edge; needs HTTPS or localhost)
+    // Web Speech API setup
     if (!('SpeechRecognition' in window) && !('webkitSpeechRecognition' in window)) {
       statusEl.textContent = "Sorry, your browser does not support speech recognition.";
       startBtn.disabled = true;
@@ -151,25 +245,25 @@
         }
         transcriptEl.textContent = transcript.trim();
 
-        // Only calculate final accuracy on non-interim (when done speaking)
         if (event.results[event.results.length - 1].isFinal) {
-          const expected = passages[currentIndex];
-          const acc = calculateAccuracy(expected, transcript);
-          accuracyEl.textContent = `Accuracy: ${acc}%`;
+          const expected = levels[currentLevel][currentIndex];
+          const { accuracy, feedbackHTML } = getWordFeedback(expected, transcript);
+          accuracyEl.textContent = `Accuracy: ${accuracy}%`;
+          feedbackEl.innerHTML = `<strong>Your reading with feedback:</strong><br>${feedbackHTML}`;
 
-          if (acc >= 90) {
+          if (accuracy >= 90) {
             accuracyEl.className = 'success';
             statusEl.textContent = "Great reading! 🎉";
             consecutiveSuccess++;
             if (consecutiveSuccess >= 2) {
-              statusEl.textContent = "Two great reads in a row! Moving to next... →";
+              statusEl.textContent = "Two great reads in a row! Moving to next part... →";
               currentIndex++;
               consecutiveSuccess = 0;
               setTimeout(loadPassage, 1800);
             }
           } else {
             accuracyEl.className = 'error';
-            statusEl.textContent = "Good try! Let's read it again.";
+            statusEl.textContent = "Good try! Let's read it again. Check the colors for what needs work.";
             consecutiveSuccess = 0;
           }
         }
@@ -182,7 +276,7 @@
 
       recognition.onend = () => {
         if (isListening) {
-          recognition.start(); // auto-restart for continuous feel
+          recognition.start();
         } else {
           statusEl.textContent = "Stopped listening.";
         }
