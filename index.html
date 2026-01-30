@@ -151,6 +151,8 @@
     let consecutiveSuccess = 0;
     let recognition;
     let isListening = false;
+    let finalTranscript = '';
+    let interimTranscript = '';
 
     const levelInfoEl = document.getElementById("level-info");
     const passageEl = document.getElementById("passage");
@@ -182,6 +184,8 @@
       transcriptEl.textContent = "";
       feedbackEl.innerHTML = "Word feedback will show here after reading.";
       accuracyEl.textContent = "";
+      finalTranscript = '';
+      interimTranscript = '';
       statusEl.textContent = "Read this part of the story now...";
     }
 
@@ -239,34 +243,15 @@
       recognition.lang = 'en-US';
 
       recognition.onresult = (event) => {
-        let transcript = '';
+        interimTranscript = '';
         for (let i = event.resultIndex; i < event.results.length; i++) {
-          transcript += event.results[i][0].transcript + ' ';
-        }
-        transcriptEl.textContent = transcript.trim();
-
-        if (event.results[event.results.length - 1].isFinal) {
-          const expected = levels[currentLevel][currentIndex];
-          const { accuracy, feedbackHTML } = getWordFeedback(expected, transcript);
-          accuracyEl.textContent = `Accuracy: ${accuracy}%`;
-          feedbackEl.innerHTML = `<strong>Your reading with feedback:</strong><br>${feedbackHTML}`;
-
-          if (accuracy >= 90) {
-            accuracyEl.className = 'success';
-            statusEl.textContent = "Great reading! 🎉";
-            consecutiveSuccess++;
-            if (consecutiveSuccess >= 2) {
-              statusEl.textContent = "Two great reads in a row! Moving to next part... →";
-              currentIndex++;
-              consecutiveSuccess = 0;
-              setTimeout(loadPassage, 1800);
-            }
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript + ' ';
           } else {
-            accuracyEl.className = 'error';
-            statusEl.textContent = "Good try! Let's read it again. Check the colors for what needs work.";
-            consecutiveSuccess = 0;
+            interimTranscript += event.results[i][0].transcript + ' ';
           }
         }
+        transcriptEl.textContent = (finalTranscript + interimTranscript).trim();
       };
 
       recognition.onerror = (event) => {
@@ -276,15 +261,44 @@
 
       recognition.onend = () => {
         if (isListening) {
-          recognition.start();
+          recognition.start(); // Auto-restart for continuous listening during pauses
         } else {
           statusEl.textContent = "Stopped listening.";
+          // Calculate accuracy on stop (using accumulated transcript)
+          const transcript = (finalTranscript + interimTranscript).trim();
+          if (transcript) {
+            const expected = levels[currentLevel][currentIndex];
+            const { accuracy, feedbackHTML } = getWordFeedback(expected, transcript);
+            accuracyEl.textContent = `Accuracy: ${accuracy}%`;
+            feedbackEl.innerHTML = `<strong>Your reading with feedback:</strong><br>${feedbackHTML}`;
+            if (accuracy >= 90) {
+              accuracyEl.className = 'success';
+              statusEl.textContent = "Great reading! 🎉";
+              consecutiveSuccess++;
+              if (consecutiveSuccess >= 2) {
+                statusEl.textContent = "Two great reads in a row! Moving to next part... →";
+                currentIndex++;
+                consecutiveSuccess = 0;
+                setTimeout(loadPassage, 1800);
+              }
+            } else {
+              accuracyEl.className = 'error';
+              statusEl.textContent = "Good try! Let's read it again. Check the colors for what needs work.";
+              consecutiveSuccess = 0;
+            }
+          }
         }
       };
     }
 
     startBtn.onclick = () => {
       if (!recognition) return;
+      // Clear for new reading attempt
+      finalTranscript = '';
+      interimTranscript = '';
+      transcriptEl.textContent = '';
+      accuracyEl.textContent = '';
+      feedbackEl.innerHTML = 'Word feedback will show here after reading.';
       isListening = true;
       recognition.start();
       statusEl.textContent = "Listening... Read clearly!";
