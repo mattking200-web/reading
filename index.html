@@ -76,7 +76,7 @@
 <body>
 
   <h1>Easy Reading Listener</h1>
-  <p>Read the passage out loud clearly. The app will listen, show what you said with colors (green=correct, red=wrong/missing, orange=extra), and tell you how accurate you were! Advance after two great reads (90%+) in a row. Higher levels have more passages and trickier words.</p>
+  <p>Read the passage out loud clearly. The app will listen, show what you said with colors (green=correct, red=wrong/missing, orange=extra), and tell you how accurate you were! Advance after one great read (90%+). Higher levels have more passages and trickier words.</p>
 
   <div id="level-info"></div>
   <div id="passage"></div>
@@ -148,7 +148,6 @@
 
     let currentLevel = 0;
     let currentIndex = 0;
-    let consecutiveSuccess = 0;
     let recognition;
     let isListening = false;
     let finalTranscript = '';
@@ -175,7 +174,6 @@
         statusEl.textContent = "Level complete! Moving to next level... ↑";
         currentLevel++;
         currentIndex = 0;
-        consecutiveSuccess = 0;
         setTimeout(loadPassage, 1800);
         return;
       }
@@ -273,18 +271,12 @@
             feedbackEl.innerHTML = `<strong>Your reading with feedback:</strong><br>${feedbackHTML}`;
             if (accuracy >= 90) {
               accuracyEl.className = 'success';
-              statusEl.textContent = "Great reading! 🎉";
-              consecutiveSuccess++;
-              if (consecutiveSuccess >= 2) {
-                statusEl.textContent = "Two great reads in a row! Moving to next part... →";
-                currentIndex++;
-                consecutiveSuccess = 0;
-                setTimeout(loadPassage, 1800);
-              }
+              statusEl.textContent = "Great reading! 🎉 Moving to next part... →";
+              currentIndex++;
+              setTimeout(loadPassage, 1800);
             } else {
               accuracyEl.className = 'error';
-              statusEl.textContent = "Good try! Let's read it again. Check the colors for what needs work.";
-              consecutiveSuccess = 0;
+              statusEl.textContent = "Try again! Check the colors for what needs work.";
             }
           }
         }
