@@ -3,209 +3,247 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Kids Reading Coach</title>
+  <title>Kids Reading Coach - DRA Level 1 Starter</title>
   <style>
     body { font-family: Arial, sans-serif; max-width: 900px; margin: 20px auto; padding: 20px; background: #f9f9f9; }
     h1 { color: #2c3e50; text-align: center; }
-    #passage { font-size: 1.4em; line-height: 1.6; background: white; padding: 20px; border: 1px solid #ddd; border-radius: 8px; white-space: pre-wrap; }
-    #controls { text-align: center; margin: 20px 0; }
-    button { padding: 12px 24px; font-size: 1.1em; margin: 8px; cursor: pointer; border: none; border-radius: 6px; }
+    #passage { font-size: 1.4em; line-height: 1.5; background: white; padding: 20px; border: 1px solid #ddd; border-radius: 8px; margin: 20px 0; white-space: pre-wrap; }
+    #transcript { font-size: 1.2em; min-height: 60px; padding: 15px; background: #e8f4fd; border: 1px dashed #3498db; border-radius: 8px; margin: 15px 0; }
+    button { font-size: 1.1em; padding: 12px 24px; margin: 8px; cursor: pointer; border: none; border-radius: 6px; }
     #start { background: #27ae60; color: white; }
     #stop { background: #e74c3c; color: white; }
-    #result { font-size: 1.2em; margin: 20px 0; padding: 15px; background: #ecf0f1; border-radius: 8px; min-height: 100px; }
-    #accuracy { font-weight: bold; font-size: 1.3em; }
-    #status { color: #7f8c8d; }
-    .highlight { background: #ffe066; padding: 2px 4px; border-radius: 4px; }
-    .success { color: green; }
-    .error { color: red; }
+    #next { background: #f39c12; color: white; }
+    #status { font-weight: bold; font-size: 1.2em; color: #34495e; text-align: center; margin: 15px 0; }
+    .correct { color: green; }
+    .error { color: red; text-decoration: underline; font-weight: bold; }
   </style>
 </head>
 <body>
-  <h1>Kids Reading Coach</h1>
-  <p style="text-align:center;">Read the passage aloud clearly. The app will listen, transcribe, and give accuracy.<br>
-  Get ≥ 90% on two passages in a row to level up!</p>
 
-  <div id="controls">
-    <button id="start">Start Listening 🎤</button>
-    <button id="stop" disabled>Stop Listening</button>
-    <select id="levelSelect">
-      <option value="0">Level 1 - Very Easy</option>
-      <option value="1">Level 2 - Easy</option>
-      <option value="2">Level 3 - Medium</option>
-    </select>
-    <button id="newPassage">New Passage</button>
-  </div>
+<h1>Kids Reading Coach - Easy Starter (DRA ~1–4)</h1>
+<p style="text-align:center;">Read the passage out loud clearly. The app will listen, transcribe, and tell you your accuracy.<br>
+You need <strong>≥90% accuracy</strong> on <strong>two passages in a row</strong> to move to the next one!</p>
 
-  <div id="passage"></div>
+<div id="status">Ready to start? Click "Start Listening"</div>
 
-  <div id="result">
-    <div id="status">Press "Start Listening" and read the passage above.</div>
-    <div id="transcribed"></div>
-    <div id="accuracy"></div>
-  </div>
+<div id="passage"></div>
 
-  <script>
-    // Passages & practice words
-    const passages = [
-      "The cat sat on the mat. The cat is fat. Fat cat, fat cat, sit on the mat. The dog can run. Run dog, run!",
-      "Sam and Pam like to play. They play all day. Pam has a big red ball. Sam kicks the ball. Kick, kick, kick the red ball! They laugh and play.",
-      "The little bird flew through the sky. It was a beautiful day. The bird sang a happy song. Tweet tweet! Enough rain had fallen. Now the sun shines bright again."
-    ];
+<button id="start">Start Listening 🎤</button>
+<button id="stop" disabled>Stop Listening</button>
+<button id="next" disabled>Next Passage →</button>
 
-    const practiceWords = [
-      ["cat", "fat", "mat"],
-      ["play", "ball", "kick"],
-      ["through", "enough", "beautiful"]
-    ];
+<div id="transcript">Your spoken words will appear here...</div>
 
-    // State variables
-    let currentLevel = 0;
-    let consecutiveSuccess = 0;
-    let recognition = null;
-    let currentPassageText = "";
-    let currentPassageLower = "";
-    let passageWordSet = new Set();
+<div id="result"></div>
 
-    const startBtn = document.getElementById('start');
-    const stopBtn = document.getElementById('stop');
-    const passageDiv = document.getElementById('passage');
-    const statusDiv = document.getElementById('status');
-    const transcribedDiv = document.getElementById('transcribed');
-    const accuracyDiv = document.getElementById('accuracy');
-    const levelSelect = document.getElementById('levelSelect');
-    const newPassageBtn = document.getElementById('newPassage');
+<script>
+// Simple passages – short, meaningful stories with some "trick" words (sight words or common misreads)
+const passages = [
+  {
+    text: "The cat sat on the mat. The mat was red. The cat was big and fat. It was a very happy cat.",
+    trickWords: ["sat", "mat", "fat", "happy"] // kept for possible future use
+  },
+  {
+    text: "Sam and Jen run to the big tree. They see a red ball in the tree. Sam jumps up. Jen claps. The ball falls down. They laugh and play.",
+    trickWords: ["run", "tree", "jumps", "claps", "laugh"]
+  },
+  {
+    text: "A little dog likes to dig. He digs in the soft sand. He finds a shiny bone. The dog wags his tail. He is so glad!",
+    trickWords: ["dig", "digs", "soft", "shiny", "wags", "glad"]
+  },
+  {
+    text: "Mom and Dad go to the shop. They buy milk, bread, and jam. I help put the food away. We all eat lunch together.",
+    trickWords: ["shop", "buy", "bread", "jam", "together"]
+  }
+  // Add more here as needed
+];
 
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let currentLevel = 0;
+let consecutiveGood = 0;
+let recognition = null;
+let currentPassageText = "";
+let originalTokens = []; // With punctuation
+let currentPassageLowerWords = []; // Lower, no punct for comparison
 
-    if (!SpeechRecognition) {
-      statusDiv.innerHTML = '<span class="error">Sorry, your browser does not support Speech Recognition. Try the latest Google Chrome.</span>';
-      startBtn.disabled = true;
-    } else {
-      recognition = new SpeechRecognition();
-      recognition.continuous = true;
-      recognition.interimResults = false;
-      recognition.maxAlternatives = 3;
-      recognition.lang = 'en-US';
+const passageEl = document.getElementById("passage");
+const transcriptEl = document.getElementById("transcript");
+const statusEl = document.getElementById("status");
+const resultEl = document.getElementById("result");
+const startBtn = document.getElementById("start");
+const stopBtn = document.getElementById("stop");
+const nextBtn = document.getElementById("next");
 
-      // Grammar (deprecated/no real effect in current Chrome, but kept for compatibility)
-      if ('SpeechGrammarList' in window) {
-        const grammarList = new window.SpeechGrammarList();
-        const allWords = [...new Set(practiceWords.flat())].join(' | ');
-        const grammarString = `#JSGF V1.0; grammar passageWords; public <word> = ${allWords};`;
-        grammarList.addFromString(grammarString);
-        recognition.grammars = grammarList;
-      }
+// Initialize SpeechRecognition (works in Chrome/Edge)
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-      recognition.onresult = (event) => {
-        const result = event.results[event.results.length - 1];
-        if (result.isFinal) {
-          const candidates = [];
-          for (let i = 0; i < result.length; i++) {
-            candidates.push(result[i].transcript.trim().toLowerCase());
-          }
-          const bestMatch = findBestCandidate(candidates);
-          transcribedDiv.innerHTML = `<strong>Best guess:</strong> ${bestMatch}<br><small>(alternatives: ${candidates.slice(1).join(', ') || 'none'})</small>`;
-          calculateAccuracy(bestMatch);
-        }
-      };
+if (!SpeechRecognition) {
+  statusEl.textContent = "Sorry — your browser does not support speech recognition. Try Chrome.";
+  startBtn.disabled = true;
+} else {
+  recognition = new SpeechRecognition();
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.lang = "en-US";
 
-      recognition.onend = () => {
-        stopBtn.disabled = true;
-        startBtn.disabled = false;
-        statusDiv.textContent = 'Listening stopped.';
-      };
+  recognition.onresult = (event) => {
+    let interim = "";
+    let final = "";
 
-      recognition.onerror = (event) => {
-        statusDiv.innerHTML = `<span class="error">Error: ${event.error} — try quieter room, closer to mic, or check permissions.</span>`;
-        stopBtn.disabled = true;
-        startBtn.disabled = false;
-      };
-    }
-
-    function loadPassage() {
-      currentPassageText = passages[currentLevel];
-      currentPassageLower = currentPassageText.toLowerCase();
-      passageWordSet = new Set(currentPassageLower.split(/\s+/).filter(w => w));
-
-      let highlighted = currentPassageText;
-      practiceWords[currentLevel].forEach(word => {
-        const regex = new RegExp(`\\b${word}\\b`, 'gi');
-        highlighted = highlighted.replace(regex, `<span class="highlight">${word}</span>`);
-      });
-
-      passageDiv.innerHTML = highlighted;
-      transcribedDiv.innerHTML = '';
-      accuracyDiv.innerHTML = '';
-      statusDiv.textContent = 'Read this passage aloud clearly. Focus on the highlighted words!';
-    }
-
-    function findBestCandidate(candidates) {
-      let best = candidates[0] || '';
-      let bestScore = 0;
-      candidates.forEach(candidate => {
-        const words = candidate.split(/\s+/).filter(w => w);
-        const score = words.filter(w => passageWordSet.has(w)).length;
-        if (score > bestScore) {
-          bestScore = score;
-          best = candidate;
-        }
-      });
-      return best;
-    }
-
-    function calculateAccuracy(transcribedLower) {
-      if (!currentPassageLower) return;
-
-      const originalWords = currentPassageLower.split(/\s+/).filter(w => w);
-      const spokenWords = transcribedLower.split(/\s+/).filter(w => w);
-
-      let correct = 0;
-      const spokenSet = new Set(spokenWords);
-      originalWords.forEach(word => {
-        if (spokenSet.has(word)) correct++;
-      });
-
-      const accuracy = originalWords.length > 0 ? Math.round((correct / originalWords.length) * 100) : 0;
-
-      accuracyDiv.innerHTML = `Accuracy: <strong>${accuracy}%</strong>`;
-
-      if (accuracy >= 90) {
-        consecutiveSuccess++;
-        statusDiv.innerHTML = `<span class="success">Great! ${accuracy}% — consecutive successes: ${consecutiveSuccess}/2</span>`;
-        if (consecutiveSuccess >= 2 && currentLevel < passages.length - 1) {
-          currentLevel++;
-          consecutiveSuccess = 0;
-          statusDiv.innerHTML += `<br><strong>→ Level up to ${currentLevel + 1}!</strong>`;
-          levelSelect.value = currentLevel;
-          loadPassage();
-        }
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const transcript = event.results[i][0].transcript;
+      if (event.results[i].isFinal) {
+        final += transcript + " ";
       } else {
-        consecutiveSuccess = 0;
-        statusDiv.innerHTML = `<span class="error">Good try! ${accuracy}% — practice more (e.g., T vs K sounds).</span>`;
+        interim += transcript + " ";
       }
     }
 
-    startBtn.onclick = () => {
-      if (!recognition) return;
-      transcribedDiv.innerHTML = '';
-      recognition.start();
-      startBtn.disabled = true;
-      stopBtn.disabled = false;
-      statusDiv.textContent = 'Listening... Read clearly and a bit slower if needed!';
-    };
+    transcriptEl.innerHTML = final + '<span style="color:#888;">' + interim + '</span>';
+  };
 
-    stopBtn.onclick = () => recognition?.stop();
+  recognition.onend = () => {
+    startBtn.disabled = false;
+    stopBtn.disabled = true;
+    statusEl.textContent = "Stopped listening.";
+  };
 
-    levelSelect.onchange = () => {
-      currentLevel = parseInt(levelSelect.value);
-      consecutiveSuccess = 0;
-      loadPassage();
-    };
+  recognition.onerror = (event) => {
+    statusEl.textContent = "Error: " + event.error;
+    startBtn.disabled = false;
+    stopBtn.disabled = true;
+  };
+}
 
-    newPassageBtn.onclick = loadPassage;
+function loadPassage() {
+  if (currentLevel >= passages.length) {
+    passageEl.textContent = "Great job! You've finished all the starter passages. 🎉 Want more? Add them in the code!";
+    startBtn.disabled = true;
+    return;
+  }
 
-    // Start with first passage
-    loadPassage();
-  </script>
+  const passage = passages[currentLevel];
+  currentPassageText = passage.text;
+  originalTokens = currentPassageText.split(/\s+/);
+  currentPassageLowerWords = originalTokens.map(token =>
+    token.toLowerCase().replace(/[^\w]/g, "")
+  ).filter(w => w.length > 0);
+
+  passageEl.textContent = originalTokens.join(" "); // Plain text
+
+  statusEl.textContent = `Passage ${currentLevel + 1} — Read aloud clearly!`;
+  transcriptEl.textContent = "";
+  resultEl.textContent = "";
+  nextBtn.disabled = true;
+}
+
+function analyzeReading(transcript) {
+  if (!transcript.trim()) return { accuracy: 0, errorIndices: [] };
+
+  const spokenWords = transcript.toLowerCase()
+    .replace(/[.,!?;:'"]/g, " ")
+    .split(/\s+/)
+    .filter(w => w.length > 0);
+
+  if (spokenWords.length === 0) return { accuracy: 0, errorIndices: [] };
+
+  let correct = 0;
+  let errorIndices = [];
+  let originalIndex = 0; // j
+  let spokenIndex = 0; // i
+  let tokenIndex = 0; // for originalTokens, skipping empty
+
+  while (originalIndex < currentPassageLowerWords.length) {
+    if (spokenIndex >= spokenWords.length) {
+      // Remaining original words are deletions (missed)
+      errorIndices.push(tokenIndex);
+      originalIndex++;
+      tokenIndex++;
+      continue;
+    }
+
+    if (spokenWords[spokenIndex] === currentPassageLowerWords[originalIndex]) {
+      correct++;
+      spokenIndex++;
+      originalIndex++;
+      tokenIndex++;
+    } else {
+      // Check for insertion in spoken
+      if (spokenIndex + 1 < spokenWords.length && spokenWords[spokenIndex + 1] === currentPassageLowerWords[originalIndex]) {
+        // Skip insertion
+        spokenIndex++;
+      } else {
+        // Substitution or deletion, mark as error
+        errorIndices.push(tokenIndex);
+        originalIndex++;
+        tokenIndex++;
+        spokenIndex++; // Assume substitution
+      }
+    }
+  }
+
+  const accuracy = Math.round((correct / currentPassageLowerWords.length) * 100);
+  return { accuracy, errorIndices };
+}
+
+function highlightErrors(errorIndices) {
+  passageEl.innerHTML = originalTokens.map((token, idx) => 
+    errorIndices.includes(idx) ? `<span class="error">${token}</span>` : token
+  ).join(" ");
+}
+
+startBtn.onclick = () => {
+  if (!recognition) return;
+  recognition.start();
+  startBtn.disabled = true;
+  stopBtn.disabled = false;
+  statusEl.textContent = "Listening... Read the passage now!";
+  // Reset passage to plain text on new start
+  passageEl.textContent = originalTokens.join(" ");
+};
+
+stopBtn.onclick = () => {
+  if (!recognition) return;
+  recognition.stop();
+};
+
+recognition.onend = () => {
+  startBtn.disabled = false;
+  stopBtn.disabled = true;
+
+  const spoken = transcriptEl.textContent.replace(/<[^>]+>/g, "").trim();
+  if (spoken) {
+    const { accuracy, errorIndices } = analyzeReading(spoken);
+    resultEl.innerHTML = `Accuracy: <strong>${accuracy}%</strong>`;
+
+    if (accuracy >= 90) {
+      consecutiveGood++;
+      resultEl.innerHTML += ' <span style="color:green;">→ Great reading!</span>';
+      if (consecutiveGood >= 2) {
+        statusEl.textContent = "Awesome! Two good reads in a row → advancing...";
+        consecutiveGood = 0;
+        currentLevel++;
+        setTimeout(loadPassage, 2000);
+      } else {
+        statusEl.textContent = `Good! One more good read to advance. (${consecutiveGood}/2)`;
+      }
+    } else {
+      consecutiveGood = 0;
+      resultEl.innerHTML += ' <span style="color:red;">→ Try again! Practice the red words.</span>';
+      statusEl.textContent = `Accuracy was ${accuracy}%. Let's try the same passage again.`;
+      highlightErrors(errorIndices);
+    }
+  }
+};
+
+nextBtn.onclick = () => {
+  currentLevel++;
+  consecutiveGood = 0;
+  loadPassage();
+};
+
+// Start with first passage
+loadPassage();
+
+</script>
 </body>
 </html>
