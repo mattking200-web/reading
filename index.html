@@ -22,7 +22,8 @@
 
 <h1>Kids Reading Coach - Easy Starter (DRA ~1–4)</h1>
 <p style="text-align:center;">Read the passage out loud clearly. The app will listen, transcribe, and tell you your accuracy.<br>
-You need <strong>≥90% accuracy</strong> on <strong>two passages in a row</strong> to move to the next one!</p>
+You need <strong>≥90% accuracy</strong> on <strong>two passages in a row</strong> to move to the next one!<br>
+Pauses are okay for thinking or punctuation—the transcript won't disappear.</p>
 
 <div id="status">Ready to start? Click "Start Listening"</div>
 
@@ -61,6 +62,7 @@ const passages = [
 let currentLevel = 0;
 let consecutiveGood = 0;
 let recognition = null;
+let finalTranscript = ""; // Persist across onresult events
 let currentPassageText = "";
 let originalTokens = []; // With punctuation
 let currentPassageLowerWords = []; // Lower, no punct for comparison
@@ -87,28 +89,52 @@ if (!SpeechRecognition) {
 
   recognition.onresult = (event) => {
     let interim = "";
-    let final = "";
 
     for (let i = event.resultIndex; i < event.results.length; i++) {
       const transcript = event.results[i][0].transcript;
       if (event.results[i].isFinal) {
-        final += transcript + " ";
+        finalTranscript += transcript + " ";
       } else {
         interim += transcript + " ";
       }
     }
 
-    transcriptEl.innerHTML = final + '<span style="color:#888;">' + interim + '</span>';
+    transcriptEl.innerHTML = finalTranscript + '<span style="color:#888;">' + interim + '</span>';
   };
 
   recognition.onend = () => {
     startBtn.disabled = false;
     stopBtn.disabled = true;
-    statusEl.textContent = "Stopped listening.";
+    statusEl.textContent = "Stopped listening. Processing...";
+
+    if (finalTranscript.trim()) {
+      const { accuracy, errorIndices } = analyzeReading(finalTranscript);
+      resultEl.innerHTML = `Accuracy: <strong>${accuracy}%</strong>`;
+
+      if (accuracy >= 90) {
+        consecutiveGood++;
+        resultEl.innerHTML += ' <span style="color:green;">→ Great reading!</span>';
+        if (consecutiveGood >= 2) {
+          statusEl.textContent = "Awesome! Two good reads in a row → advancing...";
+          consecutiveGood = 0;
+          currentLevel++;
+          setTimeout(loadPassage, 2000);
+        } else {
+          statusEl.textContent = `Good! One more good read to advance. (${consecutiveGood}/2)`;
+        }
+      } else {
+        consecutiveGood = 0;
+        resultEl.innerHTML += ' <span style="color:red;">→ Try again! Practice the red words.</span>';
+        statusEl.textContent = `Accuracy was ${accuracy}%. Let's try the same passage again.`;
+        highlightErrors(errorIndices);
+      }
+    } else {
+      statusEl.textContent = "No speech detected. Try again!";
+    }
   };
 
   recognition.onerror = (event) => {
-    statusEl.textContent = "Error: " + event.error;
+    statusEl.textContent = "Error: " + event.error + ". Try starting again.";
     startBtn.disabled = false;
     stopBtn.disabled = true;
   };
@@ -148,9 +174,9 @@ function analyzeReading(transcript) {
 
   let correct = 0;
   let errorIndices = [];
-  let originalIndex = 0; // j
-  let spokenIndex = 0; // i
-  let tokenIndex = 0; // for originalTokens, skipping empty
+  let originalIndex = 0; // for currentPassageLowerWords
+  let spokenIndex = 0; // for spokenWords
+  let tokenIndex = 0; // for originalTokens
 
   while (originalIndex < currentPassageLowerWords.length) {
     if (spokenIndex >= spokenWords.length) {
@@ -193,46 +219,19 @@ function highlightErrors(errorIndices) {
 
 startBtn.onclick = () => {
   if (!recognition) return;
+  finalTranscript = ""; // Reset for new session
+  transcriptEl.innerHTML = "Listening...";
   recognition.start();
   startBtn.disabled = true;
   stopBtn.disabled = false;
-  statusEl.textContent = "Listening... Read the passage now!";
-  // Reset passage to plain text on new start
+  statusEl.textContent = "Listening... Read the passage now! Pauses are fine.";
+  // Reset passage to plain text
   passageEl.textContent = originalTokens.join(" ");
 };
 
 stopBtn.onclick = () => {
   if (!recognition) return;
   recognition.stop();
-};
-
-recognition.onend = () => {
-  startBtn.disabled = false;
-  stopBtn.disabled = true;
-
-  const spoken = transcriptEl.textContent.replace(/<[^>]+>/g, "").trim();
-  if (spoken) {
-    const { accuracy, errorIndices } = analyzeReading(spoken);
-    resultEl.innerHTML = `Accuracy: <strong>${accuracy}%</strong>`;
-
-    if (accuracy >= 90) {
-      consecutiveGood++;
-      resultEl.innerHTML += ' <span style="color:green;">→ Great reading!</span>';
-      if (consecutiveGood >= 2) {
-        statusEl.textContent = "Awesome! Two good reads in a row → advancing...";
-        consecutiveGood = 0;
-        currentLevel++;
-        setTimeout(loadPassage, 2000);
-      } else {
-        statusEl.textContent = `Good! One more good read to advance. (${consecutiveGood}/2)`;
-      }
-    } else {
-      consecutiveGood = 0;
-      resultEl.innerHTML += ' <span style="color:red;">→ Try again! Practice the red words.</span>';
-      statusEl.textContent = `Accuracy was ${accuracy}%. Let's try the same passage again.`;
-      highlightErrors(errorIndices);
-    }
-  }
 };
 
 nextBtn.onclick = () => {
