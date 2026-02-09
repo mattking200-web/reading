@@ -1,248 +1,116 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Kids Reading Coach - DRA Level 1 Starter</title>
-  <style>
-    body { font-family: Arial, sans-serif; max-width: 900px; margin: 20px auto; padding: 20px; background: #f9f9f9; }
-    h1 { color: #2c3e50; text-align: center; }
-    #passage { font-size: 1.4em; line-height: 1.5; background: white; padding: 20px; border: 1px solid #ddd; border-radius: 8px; margin: 20px 0; white-space: pre-wrap; }
-    #transcript { font-size: 1.2em; min-height: 60px; padding: 15px; background: #e8f4fd; border: 1px dashed #3498db; border-radius: 8px; margin: 15px 0; }
-    button { font-size: 1.1em; padding: 12px 24px; margin: 8px; cursor: pointer; border: none; border-radius: 6px; }
-    #start { background: #27ae60; color: white; }
-    #stop { background: #e74c3c; color: white; }
-    #next { background: #f39c12; color: white; }
-    #status { font-weight: bold; font-size: 1.2em; color: #34495e; text-align: center; margin: 15px 0; }
-    .correct { color: green; }
-    .error { color: red; text-decoration: underline; font-weight: bold; }
-  </style>
+<meta charset="UTF-8">
+<title>Reading Buddy Test</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  body { font-family: Arial, sans-serif; background:#f4f8f3; padding:20px; }
+  button { padding:10px 16px; font-size:16px; margin:5px; }
+  #story { margin:20px 0; font-size:18px; }
+  #status { margin-top:10px; font-weight:bold; }
+</style>
 </head>
 <body>
 
-<h1>Kids Reading Coach - Easy Starter (DRA ~1–4)</h1>
-<p style="text-align:center;">Read the passage out loud clearly. The app will listen, transcribe, and tell you your accuracy.<br>
-You need <strong>≥90% accuracy</strong> on <strong>two passages in a row</strong> to move to the next one!<br>
-Pauses are okay for thinking or punctuation—the transcript won't disappear.</p>
+<h1>📘 Reading Buddy (Test Build)</h1>
+<p>Current Level: <span id="level">1</span></p>
 
-<div id="status">Ready to start? Click "Start Listening"</div>
+<div id="story">The cat sat on the mat. The cat was happy.</div>
 
-<div id="passage"></div>
+<button onclick="startReading()">🎤 Start Reading</button>
+<button onclick="stopReading()">⏹ Stop</button>
 
-<button id="start">Start Listening 🎤</button>
-<button id="stop" disabled>Stop Listening</button>
-<button id="next" disabled>Next Passage →</button>
-
-<div id="transcript">Your spoken words will appear here...</div>
-
-<div id="result"></div>
+<div id="status"></div>
 
 <script>
-// Simple passages – short, meaningful stories with some "trick" words (sight words or common misreads)
-const passages = [
-  {
-    text: "The cat sat on the mat. The mat was red. The cat was big and fat. It was a very happy cat.",
-    trickWords: ["sat", "mat", "fat", "happy"] // kept for possible future use
-  },
-  {
-    text: "Sam and Jen run to the big tree. They see a red ball in the tree. Sam jumps up. Jen claps. The ball falls down. They laugh and play.",
-    trickWords: ["run", "tree", "jumps", "claps", "laugh"]
-  },
-  {
-    text: "A little dog likes to dig. He digs in the soft sand. He finds a shiny bone. The dog wags his tail. He is so glad!",
-    trickWords: ["dig", "digs", "soft", "shiny", "wags", "glad"]
-  },
-  {
-    text: "Mom and Dad go to the shop. They buy milk, bread, and jam. I help put the food away. We all eat lunch together.",
-    trickWords: ["shop", "buy", "bread", "jam", "together"]
-  }
-  // Add more here as needed
-];
+let level = 1;
+let transcript = "";
+let listening = false;
 
-let currentLevel = 0;
-let consecutiveGood = 0;
-let recognition = null;
-let finalTranscript = ""; // Persist across onresult events
-let currentPassageText = "";
-let originalTokens = []; // With punctuation
-let currentPassageLowerWords = []; // Lower, no punct for comparison
-
-const passageEl = document.getElementById("passage");
-const transcriptEl = document.getElementById("transcript");
+const levelEl = document.getElementById("level");
+const storyEl = document.getElementById("story");
 const statusEl = document.getElementById("status");
-const resultEl = document.getElementById("result");
-const startBtn = document.getElementById("start");
-const stopBtn = document.getElementById("stop");
-const nextBtn = document.getElementById("next");
 
-// Initialize SpeechRecognition (works in Chrome/Edge)
+let storyText = storyEl.innerText;
+
+// Initialize Web Speech API
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
 if (!SpeechRecognition) {
-  statusEl.textContent = "Sorry — your browser does not support speech recognition. Try Chrome.";
-  startBtn.disabled = true;
-} else {
-  recognition = new SpeechRecognition();
-  recognition.continuous = true;
-  recognition.interimResults = true;
-  recognition.lang = "en-US";
-
-  recognition.onresult = (event) => {
-    let interim = "";
-
-    for (let i = event.resultIndex; i < event.results.length; i++) {
-      const transcript = event.results[i][0].transcript;
-      if (event.results[i].isFinal) {
-        finalTranscript += transcript + " ";
-      } else {
-        interim += transcript + " ";
-      }
-    }
-
-    transcriptEl.innerHTML = finalTranscript + '<span style="color:#888;">' + interim + '</span>';
-  };
-
-  recognition.onend = () => {
-    startBtn.disabled = false;
-    stopBtn.disabled = true;
-    statusEl.textContent = "Stopped listening. Processing...";
-
-    if (finalTranscript.trim()) {
-      const { accuracy, errorIndices } = analyzeReading(finalTranscript);
-      resultEl.innerHTML = `Accuracy: <strong>${accuracy}%</strong>`;
-
-      if (accuracy >= 90) {
-        consecutiveGood++;
-        resultEl.innerHTML += ' <span style="color:green;">→ Great reading!</span>';
-        if (consecutiveGood >= 2) {
-          statusEl.textContent = "Awesome! Two good reads in a row → advancing...";
-          consecutiveGood = 0;
-          currentLevel++;
-          setTimeout(loadPassage, 2000);
-        } else {
-          statusEl.textContent = `Good! One more good read to advance. (${consecutiveGood}/2)`;
-        }
-      } else {
-        consecutiveGood = 0;
-        resultEl.innerHTML += ' <span style="color:red;">→ Try again! Practice the red words.</span>';
-        statusEl.textContent = `Accuracy was ${accuracy}%. Let's try the same passage again.`;
-        highlightErrors(errorIndices);
-      }
-    } else {
-      statusEl.textContent = "No speech detected. Try again!";
-    }
-  };
-
-  recognition.onerror = (event) => {
-    statusEl.textContent = "Error: " + event.error + ". Try starting again.";
-    startBtn.disabled = false;
-    stopBtn.disabled = true;
-  };
+  statusEl.innerText = "Speech recognition not supported in this browser.";
 }
 
-function loadPassage() {
-  if (currentLevel >= passages.length) {
-    passageEl.textContent = "Great job! You've finished all the starter passages. 🎉 Want more? Add them in the code!";
-    startBtn.disabled = true;
+const recognition = new SpeechRecognition();
+recognition.lang = "en-US";
+recognition.continuous = true;
+recognition.interimResults = true;
+
+recognition.onstart = () => {
+  listening = true;
+  transcript = "";
+  statusEl.innerText = "🎤 Listening...";
+};
+
+recognition.onresult = (event) => {
+  transcript = "";
+  for (let i = 0; i < event.results.length; i++) {
+    transcript += event.results[i][0].transcript + " ";
+  }
+};
+
+recognition.onerror = (event) => {
+  statusEl.innerText = "Speech error: " + event.error;
+};
+
+recognition.onend = () => {
+  if (!listening) return;
+  listening = false;
+  scoreReading();
+};
+
+function startReading() {
+  transcript = "";
+  recognition.start();
+}
+
+function stopReading() {
+  recognition.stop();
+}
+
+// ✅ Tolerant scoring: count a word correct if it exists anywhere in transcript
+function scoreReading() {
+  if (!transcript.trim()) {
+    statusEl.innerText = "No speech detected. Try again.";
     return;
   }
 
-  const passage = passages[currentLevel];
-  currentPassageText = passage.text;
-  originalTokens = currentPassageText.split(/\s+/);
-  currentPassageLowerWords = originalTokens.map(token =>
-    token.toLowerCase().replace(/[^\w]/g, "")
-  ).filter(w => w.length > 0);
+  const normalize = text =>
+    text.toLowerCase().replace(/[^\w\s]/g, "").split(/\s+/).filter(Boolean);
 
-  passageEl.textContent = originalTokens.join(" "); // Plain text
-
-  statusEl.textContent = `Passage ${currentLevel + 1} — Read aloud clearly!`;
-  transcriptEl.textContent = "";
-  resultEl.textContent = "";
-  nextBtn.disabled = true;
-}
-
-function analyzeReading(transcript) {
-  if (!transcript.trim()) return { accuracy: 0, errorIndices: [] };
-
-  const spokenWords = transcript.toLowerCase()
-    .replace(/[.,!?;:'"]/g, " ")
-    .split(/\s+/)
-    .filter(w => w.length > 0);
-
-  if (spokenWords.length === 0) return { accuracy: 0, errorIndices: [] };
+  const targetWords = normalize(storyText);
+  const spokenWords = normalize(transcript);
 
   let correct = 0;
-  let errorIndices = [];
-  let originalIndex = 0; // for currentPassageLowerWords
-  let spokenIndex = 0; // for spokenWords
-  let tokenIndex = 0; // for originalTokens
 
-  while (originalIndex < currentPassageLowerWords.length) {
-    if (spokenIndex >= spokenWords.length) {
-      // Remaining original words are deletions (missed)
-      errorIndices.push(tokenIndex);
-      originalIndex++;
-      tokenIndex++;
-      continue;
-    }
+  targetWords.forEach(word => {
+    if (spokenWords.includes(word)) correct++;
+  });
 
-    if (spokenWords[spokenIndex] === currentPassageLowerWords[originalIndex]) {
-      correct++;
-      spokenIndex++;
-      originalIndex++;
-      tokenIndex++;
-    } else {
-      // Check for insertion in spoken
-      if (spokenIndex + 1 < spokenWords.length && spokenWords[spokenIndex + 1] === currentPassageLowerWords[originalIndex]) {
-        // Skip insertion
-        spokenIndex++;
-      } else {
-        // Substitution or deletion, mark as error
-        errorIndices.push(tokenIndex);
-        originalIndex++;
-        tokenIndex++;
-        spokenIndex++; // Assume substitution
-      }
-    }
+  const accuracy = Math.round((correct / targetWords.length) * 100);
+
+  statusEl.innerText = `Accuracy: ${accuracy}%`;
+
+  if (accuracy >= 80) {
+    level++;
+    levelEl.innerText = level;
+    // Next story
+    storyText = "The dog ran in the park. The dog played with a ball.";
+    storyEl.innerText = storyText;
+    statusEl.innerText += " 🎉 Level up!";
   }
-
-  const accuracy = Math.round((correct / currentPassageLowerWords.length) * 100);
-  return { accuracy, errorIndices };
 }
-
-function highlightErrors(errorIndices) {
-  passageEl.innerHTML = originalTokens.map((token, idx) => 
-    errorIndices.includes(idx) ? `<span class="error">${token}</span>` : token
-  ).join(" ");
-}
-
-startBtn.onclick = () => {
-  if (!recognition) return;
-  finalTranscript = ""; // Reset for new session
-  transcriptEl.innerHTML = "Listening...";
-  recognition.start();
-  startBtn.disabled = true;
-  stopBtn.disabled = false;
-  statusEl.textContent = "Listening... Read the passage now! Pauses are fine.";
-  // Reset passage to plain text
-  passageEl.textContent = originalTokens.join(" ");
-};
-
-stopBtn.onclick = () => {
-  if (!recognition) return;
-  recognition.stop();
-};
-
-nextBtn.onclick = () => {
-  currentLevel++;
-  consecutiveGood = 0;
-  loadPassage();
-};
-
-// Start with first passage
-loadPassage();
-
 </script>
+
 </body>
 </html>
