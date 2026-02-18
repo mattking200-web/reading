@@ -1,116 +1,180 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Reading Buddy Test</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-  body { font-family: Arial, sans-serif; background:#f4f8f3; padding:20px; }
-  button { padding:10px 16px; font-size:16px; margin:5px; }
-  #story { margin:20px 0; font-size:18px; }
-  #status { margin-top:10px; font-weight:bold; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Reading Coach</title>
+    <style>
+        :root { --primary: #6c5ce7; --bg: #f8f9fa; --text: #2d3436; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .phone { width: 350px; height: 700px; background: white; border: 12px solid #222; border-radius: 40px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); position: relative; display: flex; flex-direction: column; overflow: hidden; }
+        
+        /* Header */
+        .header { background: var(--primary); color: white; padding: 25px 20px 15px; text-align: center; }
+        .level-pill { background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 14px; }
+
+        /* Book Area */
+        .book-area { flex-grow: 1; padding: 30px 20px; text-align: center; display: flex; flex-direction: column; justify-content: center; }
+        .word { font-size: 28px; cursor: pointer; padding: 2px 4px; border-radius: 5px; display: inline-block; transition: 0.2s; }
+        .word:hover { background: #eee; }
+        .word.manual { background: #55efc4; color: #003d2b; font-weight: bold; }
+
+        /* Controls */
+        .controls { padding: 20px; background: white; border-top: 1px solid #eee; }
+        .btn-mic { width: 100%; padding: 15px; border-radius: 30px; border: none; background: #ff7675; color: white; font-size: 18px; font-weight: bold; cursor: pointer; margin-bottom: 10px; }
+        .btn-mic.listening { background: #d63031; animation: pulse 1s infinite; }
+        
+        /* Celebration Overlay */
+        #celebration { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary); color: white; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 10; text-align: center; }
+        
+        .feedback { font-size: 12px; color: #636e72; text-align: center; margin-top: 10px; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+    </style>
 </head>
 <body>
 
-<h1>📘 Reading Buddy (Test Build)</h1>
-<p>Current Level: <span id="level">1</span></p>
+<div class="phone">
+    <div id="celebration">
+        <h1>🌟 LEVEL UP! 🌟</h1>
+        <p id="celebration-text"></p>
+    </div>
 
-<div id="story">The cat sat on the mat. The cat was happy.</div>
+    <div class="header">
+        <div style="margin-bottom: 5px;">Reading Coach</div>
+        <span class="level-pill" id="level-tag">DRA Level: A1</span>
+    </div>
 
-<button onclick="startReading()">🎤 Start Reading</button>
-<button onclick="stopReading()">⏹ Stop</button>
+    <div class="book-area" id="book-content">
+        </div>
 
-<div id="status"></div>
+    <div class="controls">
+        <div id="transcript" style="font-size: 12px; color: #aaa; margin-bottom: 10px; height: 15px; text-align: center;"></div>
+        <button class="btn-mic" id="mic-btn" onclick="toggleMic()">🎤 Start Reading</button>
+        <div class="feedback">Parent: Tap a word if the AI missed it!</div>
+        
+        <div style="margin-top: 15px; display: flex; gap: 5px;">
+            <button onclick="simulate(true)" style="flex:1; font-size: 10px;">Simulate Success</button>
+            <button onclick="simulate(false)" style="flex:1; font-size: 10px;">Simulate Fail</button>
+        </div>
+    </div>
+</div>
 
 <script>
-let level = 1;
-let transcript = "";
-let listening = false;
+    let level = 1;
+    let problemBank = [];
+    let currentText = "";
+    let manualCorrects = new Set();
+    let isListening = false;
 
-const levelEl = document.getElementById("level");
-const storyEl = document.getElementById("story");
-const statusEl = document.getElementById("status");
+    // DRA Content Logic
+    const DRA_MAP = {
+        1: ["I see a cat.", "I see the dog.", "I am happy."],
+        2: ["Look at the big car.", "Here is my ball.", "I like my house."],
+        3: ["The little bird can fly.", "We can go to play.", "Look at the red apple."]
+    };
 
-let storyText = storyEl.innerText;
+    function generateBook() {
+        const templates = DRA_MAP[level] || ["Reading is very fun today!"];
+        let text = templates[Math.floor(Math.random() * templates.length)];
+        
+        if (problemBank.length > 0) {
+            text += ` Look at the ${problemBank[0]}.`;
+        }
 
-// Initialize Web Speech API
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        currentText = text;
+        manualCorrects.clear();
+        renderWords();
+        document.getElementById('level-tag').innerText = `DRA Level: ${level}`;
+    }
 
-if (!SpeechRecognition) {
-  statusEl.innerText = "Speech recognition not supported in this browser.";
-}
+    function renderWords() {
+        const container = document.getElementById('book-content');
+        container.innerHTML = currentText.split(' ').map((word, i) => 
+            `<span class="word" id="word-${i}" onclick="toggleWord(${i})">${word}</span>`
+        ).join(' ');
+    }
 
-const recognition = new SpeechRecognition();
-recognition.lang = "en-US";
-recognition.continuous = true;
-recognition.interimResults = true;
+    function toggleWord(i) {
+        const el = document.getElementById(`word-${i}`);
+        if (manualCorrects.has(i)) {
+            manualCorrects.delete(i);
+            el.classList.remove('manual');
+        } else {
+            manualCorrects.add(i);
+            el.classList.add('manual');
+        }
+    }
 
-recognition.onstart = () => {
-  listening = true;
-  transcript = "";
-  statusEl.innerText = "🎤 Listening...";
-};
+    // Speech Engine
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = SpeechRecognition ? new SpeechRecognition() : null;
 
-recognition.onresult = (event) => {
-  transcript = "";
-  for (let i = 0; i < event.results.length; i++) {
-    transcript += event.results[i][0].transcript + " ";
-  }
-};
+    if (recognition) {
+        recognition.onresult = (e) => {
+            const result = e.results[0][0].transcript;
+            document.getElementById('transcript').innerText = `Heard: "${result}"`;
+            processReading(result);
+        };
+        recognition.onend = () => {
+            isListening = false;
+            document.getElementById('mic-btn').innerText = "🎤 Start Reading";
+            document.getElementById('mic-btn').classList.remove('listening');
+        };
+    }
 
-recognition.onerror = (event) => {
-  statusEl.innerText = "Speech error: " + event.error;
-};
+    function toggleMic() {
+        if (!recognition) return alert("Speech not supported");
+        if (isListening) {
+            recognition.stop();
+        } else {
+            isListening = true;
+            document.getElementById('mic-btn').innerText = "🛑 Finish";
+            document.getElementById('mic-btn').classList.add('listening');
+            recognition.start();
+        }
+    }
 
-recognition.onend = () => {
-  if (!listening) return;
-  listening = false;
-  scoreReading();
-};
+    function processReading(spoken) {
+        const targetWords = currentText.toLowerCase().replace(/[.,!]/g, "").split(' ');
+        const spokenWords = spoken.toLowerCase().split(' ');
+        
+        let hits = 0;
+        let missed = [];
 
-function startReading() {
-  transcript = "";
-  recognition.start();
-}
+        targetWords.forEach((word, i) => {
+            if (spokenWords.includes(word) || manualCorrects.has(i)) {
+                hits++;
+            } else {
+                missed.push(word);
+            }
+        });
 
-function stopReading() {
-  recognition.stop();
-}
+        const acc = (hits / targetWords.length) * 100;
+        
+        if (acc >= 96) {
+            document.getElementById('celebration-text').innerText = `You reached ${Math.round(acc)}% accuracy!`;
+            document.getElementById('celebration').style.display = 'flex';
+            level++;
+            problemBank = []; // Clear bank on level up
+            setTimeout(() => {
+                document.getElementById('celebration').style.display = 'none';
+                generateBook();
+            }, 3000);
+        } else if (acc < 90) {
+            problemBank = [...new Set([...problemBank, ...missed])];
+            alert(`Accuracy: ${Math.round(acc)}%. Let's try again with these words!`);
+            generateBook();
+        } else {
+            alert(`Accuracy: ${Math.round(acc)}%. Good job!`);
+            generateBook();
+        }
+    }
 
-// ✅ Tolerant scoring: count a word correct if it exists anywhere in transcript
-function scoreReading() {
-  if (!transcript.trim()) {
-    statusEl.innerText = "No speech detected. Try again.";
-    return;
-  }
+    function simulate(success) {
+        processReading(success ? currentText : "the");
+    }
 
-  const normalize = text =>
-    text.toLowerCase().replace(/[^\w\s]/g, "").split(/\s+/).filter(Boolean);
-
-  const targetWords = normalize(storyText);
-  const spokenWords = normalize(transcript);
-
-  let correct = 0;
-
-  targetWords.forEach(word => {
-    if (spokenWords.includes(word)) correct++;
-  });
-
-  const accuracy = Math.round((correct / targetWords.length) * 100);
-
-  statusEl.innerText = `Accuracy: ${accuracy}%`;
-
-  if (accuracy >= 80) {
-    level++;
-    levelEl.innerText = level;
-    // Next story
-    storyText = "The dog ran in the park. The dog played with a ball.";
-    storyEl.innerText = storyText;
-    statusEl.innerText += " 🎉 Level up!";
-  }
-}
+    generateBook();
 </script>
-
 </body>
 </html>
