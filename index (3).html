@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Reading Buddy 📚</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fredoka+One&display=swap" rel="stylesheet">
+<style>
+:root {
+  --mint:#4ade80; --mint-dark:#16a34a; --sky:#38bdf8; --sky-dark:#0284c7;
+  --coral:#fb7185; --yellow:#fbbf24; --purple:#a78bfa; --orange:#fb923c;
+  --bg:#f0fdf4; --text:#1e293b; --muted:#64748b; --border:#e2e8f0;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:'Nunito',sans-serif;
+  background:var(--bg);
+  background-image:radial-gradient(circle at 15% 15%,#dcfce7 0%,transparent 45%),
+                   radial-gradient(circle at 85% 85%,#dbeafe 0%,transparent 45%);
+  min-height:100vh;color:var(--text);padding:16px;
+}
+h1,h2,h3{font-family:'Fredoka One',cursive;letter-spacing:.02em;}
+.container{max-width:700px;margin:0 auto;}
+
+/* ── Header ── */
+.header{
+  background:#fff;border-radius:24px;padding:18px 22px;margin-bottom:14px;
+  box-shadow:0 4px 20px rgba(0,0,0,.06);border:2px solid #dcfce7;
+  display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;
+}
+.header-left h1{font-size:1.7rem;color:#16a34a;}
+.header-left p{font-size:.72rem;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.08em;margin-top:2px;}
+.level-badge{text-align:right;}
+.level-badge .lbl{font-size:.58rem;font-weight:900;color:#94a3b8;text-transform:uppercase;letter-spacing:.12em;}
+.level-badge .val{font-family:'Fredoka One',cursive;font-size:2rem;color:var(--mint-dark);line-height:1.1;}
+.level-badge .desc{font-size:.7rem;color:var(--muted);font-weight:700;}
+.streak-bar{display:flex;gap:3px;justify-content:flex-end;margin-top:5px;}
+.s-dot{width:16px;height:5px;border-radius:99px;background:#e2e8f0;transition:background .3s;}
+.s-dot.on{background:#22c55e;} .s-dot.warn{background:var(--coral);}
+
+/* ── Level Picker ── */
+.level-picker{
+  background:#fff;border-radius:24px;padding:22px;margin-bottom:14px;
+  box-shadow:0 4px 20px rgba(0,0,0,.05);border:2px solid #f1f5f9;
+}
+.level-picker h2{font-size:1.1rem;color:var(--text);margin-bottom:14px;}
+.level-grid{display:flex;flex-wrap:wrap;gap:8px;}
+.lvl-btn{
+  padding:8px 14px;border:2px solid var(--border);border-radius:10px;
+  font-family:'Fredoka One',cursive;font-size:1rem;cursor:pointer;background:#fff;
+  color:var(--text);transition:all .15s;letter-spacing:.03em;
+}
+.lvl-btn:hover{border-color:var(--mint);background:#f0fdf4;transform:translateY(-1px);}
+.lvl-btn.active{background:var(--mint-dark);border-color:var(--mint-dark);color:#fff;box-shadow:0 3px 10px rgba(22,163,74,.3);}
+.lvl-btn.done{background:#dcfce7;border-color:#86efac;color:#16a34a;}
+
+/* ── Card ── */
+.card{background:#fff;border-radius:24px;padding:22px;margin-bottom:14px;box-shadow:0 4px 20px rgba(0,0,0,.05);border:2px solid #f1f5f9;}
+
+/* ── Buttons ── */
+.btn{padding:11px 20px;border:none;border-radius:12px;font-family:'Fredoka One',cursive;font-size:.98rem;cursor:pointer;transition:transform .15s,box-shadow .15s,opacity .2s;letter-spacing:.04em;}
+.btn:hover:not(:disabled){transform:translateY(-2px);}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none!important;}
+.btn-green {background:linear-gradient(135deg,#4ade80,#22c55e);color:#fff;box-shadow:0 4px 14px rgba(74,222,128,.3);}
+.btn-blue  {background:linear-gradient(135deg,#38bdf8,#0ea5e9);color:#fff;box-shadow:0 4px 14px rgba(56,189,248,.3);}
+.btn-red   {background:linear-gradient(135deg,#fb7185,#f43f5e);color:#fff;box-shadow:0 4px 14px rgba(251,113,133,.3);}
+.btn-purple{background:linear-gradient(135deg,#a78bfa,#7c3aed);color:#fff;box-shadow:0 4px 14px rgba(167,139,250,.3);}
+.btn-orange{background:linear-gradient(135deg,#fb923c,#ea580c);color:#fff;box-shadow:0 4px 14px rgba(251,146,60,.3);}
+.btn-ghost {background:#f1f5f9;color:#475569;}
+.btn-lg{padding:17px 28px;font-size:1.45rem;width:100%;border-radius:18px;}
+
+/* ── Story ── */
+.story-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:8px;flex-wrap:wrap;}
+.story-box{background:linear-gradient(135deg,#f0fdf4,#eff6ff);border-radius:20px;padding:26px 22px;border:3px solid #dcfce7;text-align:center;}
+.story-title{font-family:'Fredoka One',cursive;font-size:1.2rem;color:var(--sky-dark);margin-bottom:13px;}
+.story-text{font-size:1.5rem;line-height:1.8;font-weight:700;color:var(--text);}
+@media(max-width:480px){.story-text{font-size:1.15rem;}}
+.live-hint{margin-top:13px;padding:9px 13px;background:rgba(255,255,255,.7);border-radius:11px;font-size:.8rem;color:var(--sky-dark);font-weight:700;font-style:italic;border:1px solid #bfdbfe;animation:pulse 2s infinite;word-break:break-word;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+.empty-state{padding:46px 20px;text-align:center;}
+.empty-emoji{font-size:68px;display:block;margin-bottom:13px;animation:float 3s ease-in-out infinite;}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+.empty-state p{color:var(--muted);font-weight:800;font-size:1rem;}
+.countdown-disp{width:100%;padding:19px;background:linear-gradient(135deg,var(--yellow),#f59e0b);color:#fff;border:none;border-radius:18px;font-family:'Fredoka One',cursive;font-size:2.4rem;text-align:center;animation:bop .5s infinite;}
+@keyframes bop{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
+
+/* ── Results ── */
+.results-card{border-radius:24px;padding:22px;margin-bottom:14px;box-shadow:0 6px 24px rgba(0,0,0,.07);}
+.results-card.success{background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:3px solid #86efac;}
+.results-card.fail   {background:linear-gradient(135deg,#fff7ed,#ffedd5);border:3px solid #fdba74;}
+.score-row{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:16px;}
+.score-num{font-family:'Fredoka One',cursive;font-size:2.8rem;color:var(--text);line-height:1;}
+.score-lbl{font-size:.68rem;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;}
+.badge{padding:7px 17px;border-radius:99px;font-family:'Fredoka One',cursive;font-size:.88rem;}
+.badge.s{background:#22c55e;color:#fff;} .badge.f{background:#f97316;color:#fff;}
+.word-feedback{display:flex;flex-wrap:wrap;gap:6px;padding:16px;background:rgba(255,255,255,.6);border-radius:13px;margin-bottom:16px;}
+.wchip{font-size:.98rem;font-weight:800;transition:transform .15s;line-height:1.6;}
+.wchip.ok {color:#16a34a;}
+.wchip.bad{color:#fca5a5;text-decoration:line-through;text-decoration-color:#ef4444;text-decoration-thickness:3px;}
+.action-row{display:flex;gap:9px;flex-wrap:wrap;}
+.action-row .btn{flex:1;min-width:100px;}
+.banner{border-radius:15px;padding:13px 17px;text-align:center;font-family:'Fredoka One',cursive;font-size:1.05rem;margin-top:13px;letter-spacing:.04em;}
+.banner.up  {background:linear-gradient(135deg,#4ade80,#06b6d4);color:#fff;animation:pulse 1.5s infinite;}
+.banner.down{background:linear-gradient(135deg,#fb923c,#f43f5e);color:#fff;animation:bop 1s infinite;}
+
+/* ── Progress bar ── */
+.progress-wrap{margin-bottom:16px;}
+.progress-label{display:flex;justify-content:space-between;font-size:.75rem;font-weight:800;color:var(--muted);margin-bottom:5px;}
+.progress-track{height:8px;background:#e2e8f0;border-radius:99px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#4ade80,#22d3ee);transition:width .5s ease;}
+
+/* ── Tips box ── */
+.tip-box{background:#fefce8;border-radius:13px;padding:13px 16px;border:2px solid #fde68a;margin-bottom:16px;font-size:.85rem;font-weight:700;color:#92400e;line-height:1.55;}
+.tip-box .tip-title{font-family:'Fredoka One',cursive;color:#d97706;margin-bottom:4px;font-size:.95rem;}
+
+.spin{display:inline-block;width:15px;height:15px;border:3px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:spinning .7s linear infinite;vertical-align:middle;margin-right:5px;}
+@keyframes spinning{to{transform:rotate(360deg)}}
+@keyframes slideUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+.slide-up{animation:slideUp .35s ease;}
+
+/* ── Story counter pill ── */
+.story-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.pill{padding:4px 12px;border-radius:99px;font-size:.72rem;font-weight:900;text-transform:uppercase;letter-spacing:.06em;}
+.pill-green{background:#dcfce7;color:#16a34a;}
+.pill-blue {background:#dbeafe;color:#1d4ed8;}
+
+footer{text-align:center;padding:16px 0;font-size:.7rem;font-weight:900;color:#94a3b8;text-transform:uppercase;letter-spacing:.15em;}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- ══ HEADER ══ -->
+  <header class="header">
+    <div class="header-left">
+      <h1>📚 Reading Buddy</h1>
+      <p>Reading A–Z Style Coach</p>
+    </div>
+    <div class="level-badge">
+      <div class="lbl">Current Level</div>
+      <div class="val" id="hdr-level">AA</div>
+      <div class="desc" id="hdr-desc">Pre-Reader</div>
+      <div class="streak-bar" id="streak-bar"></div>
+    </div>
+  </header>
+
+  <!-- ══ LEVEL PICKER ══ -->
+  <div class="level-picker" id="level-picker">
+    <h2>🎯 Choose Starting Level</h2>
+    <div class="level-grid" id="level-grid"></div>
+  </div>
+
+  <!-- ══ STORY PANEL ══ -->
+  <div class="card" id="story-panel" style="display:none;">
+    <div class="story-top">
+      <div class="story-meta">
+        <h2 style="font-size:1.1rem;">Practice Time</h2>
+        <span class="pill pill-green" id="story-level-pill">Level AA</span>
+        <span class="pill pill-blue"  id="story-num-pill">Story 1</span>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-ghost" onclick="showLevelPicker()" style="font-size:.85rem;padding:8px 14px;">🎯 Change Level</button>
+        <button class="btn btn-blue" id="new-story-btn" onclick="loadStory()">New Story</button>
+      </div>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-label">
+        <span id="prog-label">Level Progress</span>
+        <span id="prog-count">0 / 2 reads to advance</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
+    </div>
+
+    <div id="story-area">
+      <div class="empty-state">
+        <span class="empty-emoji">📖</span>
+        <p>Tap "New Story" to begin!</p>
+      </div>
+    </div>
+    <div id="mic-controls" style="margin-top:13px;display:none;"></div>
+  </div>
+
+  <!-- ══ RESULTS ══ -->
+  <div id="results-area" style="display:none;"></div>
+
+  <footer>Reading Buddy · No API Key Required · Reading A–Z Style Levels</footer>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════
+//  LEVEL DATA  (Reading A-Z: AA → Z)
+// ════════════════════════════════════════════════════════
+const LEVELS = [
+  { id:'AA', label:'AA', desc:'Pre-Reader',      color:'#86efac', words:15,  sentences:2 },
+  { id:'A',  label:'A',  desc:'Emergent',         color:'#6ee7b7', words:20,  sentences:3 },
+  { id:'B',  label:'B',  desc:'Emergent',         color:'#5eead4', words:30,  sentences:4 },
+  { id:'C',  label:'C',  desc:'Early Emergent',   color:'#38bdf8', words:40,  sentences:5 },
+  { id:'D',  label:'D',  desc:'Early Emergent',   color:'#60a5fa', words:55,  sentences:6 },
+  { id:'E',  label:'E',  desc:'Early Reader',     color:'#818cf8', words:70,  sentences:7 },
+  { id:'F',  label:'F',  desc:'Early Reader',     color:'#a78bfa', words:90,  sentences:8 },
+  { id:'G',  label:'G',  desc:'Developing',       color:'#c084fc', words:110, sentences:9 },
+  { id:'H',  label:'H',  desc:'Developing',       color:'#e879f9', words:130, sentences:10 },
+  { id:'I',  label:'I',  desc:'Developing',       color:'#f472b6', words:150, sentences:11 },
+  { id:'J',  label:'J',  desc:'Early Fluent',     color:'#fb7185', words:175, sentences:12 },
+  { id:'K',  label:'K',  desc:'Early Fluent',     color:'#fb923c', words:200, sentences:13 },
+  { id:'L',  label:'L',  desc:'Early Fluent',     color:'#fbbf24', words:225, sentences:14 },
+  { id:'M',  label:'M',  desc:'Transitional',     color:'#a3e635', words:250, sentences:15 },
+  { id:'N',  label:'N',  desc:'Transitional',     color:'#4ade80', words:280, sentences:16 },
+  { id:'O',  label:'O',  desc:'Transitional',     color:'#34d399', words:310, sentences:17 },
+  { id:'P',  label:'P',  desc:'Fluent',           color:'#2dd4bf', words:340, sentences:18 },
+  { id:'Q',  label:'Q',  desc:'Fluent',           color:'#22d3ee', words:370, sentences:19 },
+  { id:'R',  label:'R',  desc:'Fluent',           color:'#38bdf8', words:400, sentences:20 },
+  { id:'S',  label:'S',  desc:'Advanced Fluent',  color:'#60a5fa', words:430, sentences:21 },
+  { id:'T',  label:'T',  desc:'Advanced Fluent',  color:'#818cf8', words:460, sentences:22 },
+  { id:'U',  label:'U',  desc:'Advanced Fluent',  color:'#a78bfa', words:490, sentences:23 },
+  { id:'V',  label:'V',  desc:'Advanced',         color:'#c084fc', words:520, sentences:24 },
+  { id:'W',  label:'W',  desc:'Advanced',         color:'#e879f9', words:550, sentences:25 },
+  { id:'X',  label:'X',  desc:'Advanced',         color:'#f472b6', words:580, sentences:26 },
+  { id:'Y',  label:'Y',  desc:'Proficient',       color:'#fb7185', words:610, sentences:27 },
+  { id:'Z',  label:'Z',  desc:'Proficient',       color:'#fb923c', words:640, sentences:28 },
+];
+
+// ════════════════════════════════════════════════════════
+//  PRE-WRITTEN STORIES  (3 per level: AA → Z)
+//  Short, decodable, level-appropriate
+// ════════════════════════════════════════════════════════
+const STORIES = {
+  AA: [
+    { title:"The Cat", text:"I see a cat. The cat is big. I like the cat." },
+    { title:"My Dog", text:"My dog is red. My dog can run. I love my dog." },
+    { title:"The Sun", text:"The sun is up. I see the sun. It is hot." },
+    { title:"The Ball", text:"I have a ball. The ball is red. I kick the ball." },
+    { title:"My Mom", text:"I see my mom. My mom is big. I love my mom." },
+  ],
+  A: [
+    { title:"I Can Jump", text:"I can jump. I can run. I can hop. I can play. It is fun." },
+    { title:"The Big Box", text:"I see a big box. The box is red. I put my toys in the box. I like my box." },
+    { title:"My Hat", text:"I have a hat. My hat is blue. I put on my hat. I go out to play." },
+    { title:"The Hen", text:"I see a hen. The hen is in the pen. The hen has eggs. I like the hen." },
+    { title:"The Pig", text:"The pig is fat. The pig can dig. The pig is in the mud. I pat the pig." },
+  ],
+  B: [
+    { title:"At the Park", text:"We go to the park. I see a slide. I can go up and down. My dad is here. We have fun at the park." },
+    { title:"My Bed", text:"My bed is soft. I get in my bed at night. I put my head on the pillow. My mom says good night. I go to sleep." },
+    { title:"The Duck", text:"I see a duck. The duck is in the pond. The duck has ducklings. They swim in the pond. I toss bread to the ducks." },
+    { title:"Rain Day", text:"It is raining today. I put on my boots. I jump in the puddle. Splash! My dog runs in the rain too." },
+    { title:"My Cat Naps", text:"My cat likes to nap. She naps on my bed. She naps in the sun. She naps all day long. I pet my cat." },
+  ],
+  C: [
+    { title:"The Nest", text:"A bird has a nest in the tree. The nest has three eggs in it. The eggs are small and blue. One day the eggs crack open. Three baby birds pop out. They are hungry. The mom bird brings food." },
+    { title:"We Bake", text:"Mom and I bake a cake. We mix the batter. We put it in the pan. We put it in the oven. It smells so good. When it is done, we put on the frosting. Then we eat it up." },
+    { title:"My Bike", text:"I have a red bike. I ride my bike on the path. I go fast down the hill. My dad runs behind me. I do not fall. I am a good rider now." },
+    { title:"The Frog", text:"I see a green frog by the pond. The frog jumps on a lily pad. It sits very still. Then it jumps in the water. Splash! I look for the frog but it is gone." },
+    { title:"Dog Tricks", text:"My dog can do tricks. She can sit and stay. She can shake my hand. She can roll over. I give her a treat when she does a good job. She wags her tail." },
+  ],
+  D: [
+    { title:"The Garden", text:"Grandma has a garden in her backyard. She grows tomatoes, beans, and flowers. Every morning she waters the plants. I help her pull the weeds. When the vegetables are ready, we pick them together. Then Grandma makes soup. It tastes so good because we grew it ourselves." },
+    { title:"Lost Mitten", text:"One cold morning, I lost my mitten on the way to school. I looked in my bag. I looked in my coat pocket. I looked on the ground. My teacher helped me look. We found it under my chair. I was so happy. Now I keep my mittens in my pocket." },
+    { title:"The Puppy", text:"We got a new puppy from the shelter. His name is Biscuit. He has brown spots and floppy ears. At first he was scared in our house. I sat on the floor and waited. He came over and licked my hand. Now Biscuit sleeps at the foot of my bed every night." },
+    { title:"Making Pizza", text:"Saturday is pizza night at our house. Dad rolls the dough into a big circle. Mom spreads the sauce on top. I get to put on the cheese. Then we each pick our toppings. I always pick peppers and mushrooms. The pizza goes in the oven. In twenty minutes dinner is ready." },
+    { title:"A Rainy Day", text:"It rained all Saturday. I could not go outside to play. First I read two books. Then I painted a picture of a rainbow. Mom taught me how to make cookies. We played a board game until dinner. It turned out to be a great day even without sunshine." },
+  ],
+  E: [
+    { title:"The Science Fair", text:"Our class had a science fair. I made a volcano out of clay and painted it red and orange. I put baking soda inside. When I poured in the vinegar, it bubbled up like lava. Everyone gathered around to watch. My teacher said it was an excellent project. I felt very proud of all the work I had done." },
+    { title:"The Library", text:"On Tuesday afternoons, Mom takes me to the library. The library is my favorite place. I love how quiet it is inside. The librarian knows my name and always finds books I will enjoy. Last week she found a whole series about a brave girl who solves mysteries. I have already read three of them." },
+    { title:"Camping Trip", text:"Our family went camping in the woods last summer. We set up our tent near a little stream. Dad taught me how to fish, and I caught my very first fish. At night we sat by the campfire. Dad told funny stories and Mom made hot chocolate. The stars looked so bright without city lights around." },
+    { title:"My New School", text:"Starting at a new school felt really scary. I did not know anyone at all. On my first morning, a girl named Sofia sat next to me at lunch. She showed me where everything was and introduced me to her friends. By the end of the week, I was not scared anymore. Sofia and I are best friends now." },
+    { title:"The Storm", text:"A big thunderstorm came through town last night. The thunder was so loud it woke me up. I saw lightning flash across the sky. I was a little frightened, so I went to my parents' room. Mom explained how lightning works. Dad showed me how to count the seconds between lightning and thunder. By the time it was over, I was not scared at all." },
+  ],
+  F: [
+    { title:"The Old Lighthouse", text:"On our vacation, we visited an old lighthouse near the ocean. A guide took us up the spiral staircase. There were one hundred and twelve steps to the top. From up there, the boats in the harbor looked like tiny toys. The guide told us that the lighthouse had been built over a hundred years ago to keep ships safe from the rocky shore. I want to be a lighthouse keeper someday." },
+    { title:"Recycling Day", text:"Every Friday is recycling day on our street. Our family sorts paper, plastic, and glass into separate bins. I learned that one recycled aluminum can saves enough energy to run a television for three hours. Now I remind my whole family to recycle. I also bring an extra bag to school to collect bottles from the cafeteria. Small actions can really make a difference." },
+    { title:"The Dragon Kite", text:"Grandpa gave me a dragon kite for my birthday. It was red and gold with a long shimmery tail. We took it to the park on a windy afternoon. At first it kept crashing into the grass. Grandpa showed me how to angle it into the wind and let the string out slowly. After several tries it climbed high above the trees. I ran and the dragon soared above me like it was alive." },
+    { title:"Fresh Snow", text:"The first snowfall of winter arrived while I was still asleep. When I looked out my window in the morning, everything was covered in white. Our dog Chester had never seen snow before. He pressed his nose against the glass and whined. When we finally let him outside, he leaped into a drift and disappeared. We laughed for a long time. Chester decided he loves snow." },
+    { title:"Grandma's Recipe", text:"My grandmother makes the best chicken soup in the world. Last winter, she finally agreed to teach me her recipe. We spent the whole afternoon together in her warm kitchen. She showed me how to chop the vegetables, season the broth, and know when the noodles are done. She said her own grandmother had taught her the same recipe long ago. Now I know it too, and one day I will pass it on." },
+  ],
+  G: [
+    { title:"The Bee Keeper", text:"My aunt keeps bees in wooden hives behind her farmhouse. She let me help her check on them one afternoon. We wore white suits with veils over our faces to protect us. She used a smoker to calm the bees before opening the hive. Inside were thousands of bees working together in perfect order. Some made wax cells, others fanned their wings, and the queen laid eggs. I tasted fresh honey straight from the comb and it was the sweetest thing I have ever eaten." },
+    { title:"Starting a Business", text:"Last summer my sister and I started a small business selling lemonade and homemade cookies in front of our house. We made a sign on cardboard and designed a price list. We figured out how much we spent on ingredients so we could set the right prices. On a hot Saturday, we made seventeen dollars in one afternoon. We split the money and both put our shares in our savings accounts. Our parents said we were natural entrepreneurs." },
+    { title:"The Disappearing Lake", text:"Scientists studying a lake in our region discovered that the water level drops every summer and rises each fall. For years nobody understood why. A team of researchers finally figured out that an underground river connects the lake to a cave system beneath the mountains. During dry months, water drains slowly into the cave. Rain in autumn fills it back up. The lake had been hiding an amazing secret all along." },
+    { title:"Moving Away", text:"When my best friend Marcus told me his family was moving to another city, I felt like someone had punched me in the stomach. We had been friends since kindergarten. The week before he left, we did everything we loved together one last time. We rode our bikes on the trail, stayed up late playing games, and made a promise to video call every weekend. Moving apart was hard, but Marcus is still my best friend." },
+    { title:"Night Sky Journal", text:"My teacher challenged us to keep a sky journal for one month. Every clear night I went outside with a blanket and a flashlight. I sketched the moon and the stars I could find. I learned the names of several constellations and tracked how the moon changed shape over the weeks. By the end of the month my journal had thirty pages of drawings and notes. I never knew how much was happening right above my head." },
+  ],
+  H: [
+    { title:"Ocean Zones", text:"The ocean is divided into zones based on how deep and how much sunlight reaches each layer. The sunlit zone near the surface is home to most of the fish, sea turtles, and dolphins we know. Beneath it is the twilight zone, where creatures must make their own faint light. The midnight zone is completely dark and bitterly cold. Scientists have only explored a small fraction of these deeper waters, and new species are discovered nearly every year. The ocean still holds many mysteries." },
+    { title:"The Map Maker", text:"In the 1500s, making an accurate map of the world was nearly impossible. Explorers returned with rough sketches and conflicting reports. A cartographer named Gerardus Mercator spent decades gathering information from sailors and scholars. He designed a new way of representing the curved surface of the Earth on a flat page. His projection was not perfect, but it allowed ships to plot straight lines across the ocean. Sailors used his maps for hundreds of years." },
+    { title:"My Little Brother", text:"My little brother Theo was born six months ago, and our family has not been the same since. At first I thought having a baby around would be nothing but trouble. He cried at night and Mom was always tired and I had to keep my music quiet. But then something changed. One morning Theo looked right at me and smiled the biggest smile I had ever seen. It was just for me. I felt something warm and important inside my chest. I think it was love." },
+    { title:"Desert Rain", text:"Rain in the desert is rare, but when it comes, the effect is astonishing. Seeds that have been waiting dormant in the dry soil for years suddenly spring to life. Within forty eight hours of a good rainfall, the sand is covered in tiny green shoots. Some flowers complete their entire life cycle in just a few weeks before the ground dries out again. The desert is not a lifeless place. It is a community of organisms that have mastered the art of waiting." },
+    { title:"The Debate", text:"Our class had a debate about whether homework should be abolished. I was assigned to argue in favor of keeping homework even though I personally disagreed with that position. I had to research both sides carefully. I found statistics about study habits, spoke to teachers, and read articles. On debate day I made my argument as clearly as I could. Even though the other team won, my teacher gave me top marks for preparation. I learned that understanding different points of view makes you a stronger thinker." },
+  ],
+  I: [
+    { title:"The Internet Before the Internet", text:"Long before the Internet existed, a network of scholars across Europe exchanged letters and ideas through what was called the Republic of Letters. Scientists and philosophers would write to each other for months or years, sharing discoveries, questioning each other's theories, and building on each other's work. A single letter could take weeks to arrive. Despite the slowness, this network produced some of the most important scientific breakthroughs of the 1600s and 1700s. It shows that the human desire to share knowledge is ancient and unstoppable." },
+    { title:"My Grandmother's Hands", text:"My grandmother's hands have always told the story of her life. They are small and brown and marked with the lines of decades of work. She grew up on a farm and learned to sew, cook, and garden before she was ten years old. When she came to this country as a young woman, those same capable hands helped her build a new life. Now she uses them to braid my hair, roll dough, and hold my face when she wants me to listen carefully. I hope that someday my hands look just like hers." },
+    { title:"Wildfires and Renewal", text:"Although wildfires are terrifying and destructive, ecologists have long understood that fire is a natural and necessary part of many ecosystems. In forests of lodgepole pine, the cones are sealed shut with a waxy resin that only melts at high temperatures. A fire actually releases the seeds, allowing new trees to grow in the cleared and nutrient rich soil. Some species of birds prefer the open habitat created in the years following a fire. Nature, it turns out, has been adapting to fire for millions of years." },
+    { title:"Learning Chess", text:"When I was in fourth grade, my uncle taught me how to play chess. I was frustrated at first because there were so many rules and my uncle beat me every single time without even trying hard. But something about the game captured my imagination. I started reading books about strategy and watching videos of grandmaster matches. Gradually I improved. By the end of the school year I entered a local tournament and finished in third place. Losing many games had been the best teacher I ever had." },
+    { title:"The Translator", text:"My mother works as a medical interpreter. She helps patients who do not speak English communicate with their doctors. It is a job that demands enormous skill and absolute accuracy. When someone describes pain or fear in one language, she must find precisely the right words in another language instantly. She often says that a misunderstood word in a hospital can change a person's life. Watching her work has made me think carefully about the power of language and how much we depend on being truly understood." },
+  ],
+  J: [
+    { title:"The Rosetta Stone", text:"For over a thousand years, the ancient Egyptian writing system known as hieroglyphics remained a complete mystery. Scholars could see the symbols carved on monuments and papyrus scrolls, but no one alive could read them. Then in 1799, soldiers in Napoleon's army discovered a large black stone near the town of Rosetta in Egypt. The stone was inscribed with the same message written in three different scripts: hieroglyphics, a simpler Egyptian script, and ancient Greek. Because scholars could already read Greek, they finally had a key to unlock the ancient language. It took twenty three more years of painstaking work, but in 1822 a French linguist named Jean François Champollion cracked the code completely." },
+    { title:"Why We Dream", text:"Every night during sleep, the human brain cycles through several stages, including a phase called REM sleep during which the eyes move rapidly and the most vivid dreams occur. Scientists have proposed many theories about why we dream. Some believe dreams help the brain process difficult emotions. Others think dreaming allows the mind to consolidate memories from the day. Certain researchers suggest that dreams are simply a byproduct of the brain organizing and pruning neural connections during sleep. Despite decades of research, no single explanation has been proven. Dreams remain one of the genuinely unsolved puzzles of neuroscience." },
+    { title:"The River Between Us", text:"The summer I was eleven, a drought lowered the river behind our house until you could almost walk across it. That was the summer I met a girl named Yara who lived on the opposite bank. She would stand in the shallows on her side and I would stand in the shallows on mine, and we would shout across the water. Over weeks of shouting we told each other everything — our families, our fears, our favourite books. When autumn rains finally filled the river again, we could no longer hear each other. I still think about Yara and wonder if she remembers our summer of talking across the water." },
+    { title:"Caves of Altamira", text:"In 1879, a Spanish amateur archaeologist named Marcelino Sanz de Sautuola was exploring a cave in northern Spain when his young daughter María noticed something extraordinary on the ceiling above her. Painted in red and black ochre were dozens of bison, horses, and deer rendered with startling life and skill. Sautuola believed the paintings were made by prehistoric people. The scientific community initially ridiculed his claim, insisting that Stone Age humans were too primitive to create art of such quality. It took more than twenty years and the discovery of similar paintings elsewhere before scholars accepted that our ancestors had been sophisticated artists for at least thirty five thousand years." },
+    { title:"A Language Called Home", text:"When my family moved from Seoul to our new city, I was eight years old and spoke almost no English. School was terrifying. I understood nothing the teachers said and sat through each lesson feeling invisible. My one refuge was mathematics, because numbers did not require translation. Over months my English improved. But something unexpected also happened: I became fluent in a third language, the language of navigating between two cultures. I learned when to bow and when to shake hands, when to speak up and when to listen. My parents call it adaptability. I call it survival. Either way, it became the skill I am most proud of." },
+  ],
+  K: [
+    { title:"The Invention of Writing", text:"Approximately five thousand years ago in ancient Mesopotamia, the people known as the Sumerians developed one of the world's first writing systems. It began not as poetry or storytelling but as accounting. Merchants needed a reliable way to record how many sheep or jars of grain had been traded. The earliest symbols were simple pictures pressed into soft clay tablets with a sharpened reed. Over centuries, these pictures became more abstract until they resembled the wedge shaped marks we call cuneiform. Writing transformed human civilization by allowing ideas, laws, and history to outlast any individual human memory. Everything you are reading right now traces its ancestry back to those clay tablets." },
+    { title:"Marathon", text:"In 490 BCE, a vastly outnumbered Athenian army defeated a Persian invasion force on the plain of Marathon. According to legend, a messenger named Pheidippides ran the roughly twenty six miles to Athens to announce the victory before collapsing and dying of exhaustion. Historians debate whether this story is entirely accurate, but it inspired the modern marathon race, which was introduced at the first modern Olympic Games in 1896. The original distance was measured from the town of Marathon to Athens, establishing the length we still run today. The race is a monument to endurance and the human capacity to push beyond apparent limits." },
+    { title:"My Father's Garden", text:"My father grew up in a small village in Mexico where his family grew corn, squash, and chili peppers in the same way their ancestors had for generations. When we moved to our apartment in the city, he brought seeds with him. Our balcony became a miniature farm. He taught me that plants in Mexico and plants in Canada need different amounts of water and light, and that you must listen to the plant, not just follow instructions. I learned that knowledge about the natural world is not stored only in books. It is stored in people, and it can travel wherever people travel." },
+    { title:"The Great Barrier Reef", text:"Stretching more than two thousand three hundred kilometres along the northeastern coast of Australia, the Great Barrier Reef is the largest living structure on Earth. It is composed of nearly three thousand individual reef systems and is home to an extraordinary diversity of life, including fifteen hundred species of fish, four thousand species of mollusk, and dozens of species of shark and marine mammal. Coral reefs are built by tiny animals called polyps that secrete calcium carbonate skeletons. Over thousands of years, these skeletons accumulate into the massive structures we see today. Rising ocean temperatures caused by climate change are bleaching and killing coral at an alarming rate, threatening one of the planet's most irreplaceable ecosystems." },
+    { title:"First Flight", text:"On December 17, 1903, on a cold and windy beach in Kitty Hawk, North Carolina, Orville and Wilbur Wright made the first successful powered aircraft flight in history. The plane flew for twelve seconds and covered thirty seven metres. To put that distance in perspective, a modern commercial airplane is longer than the entire distance of that first flight. The Wright brothers were self taught engineers who ran a bicycle shop. They had no university degrees and no government funding. They succeeded through systematic experimentation, careful observation, and an extraordinary willingness to fail, learn, and try again." },
+  ],
+  L: [
+    { title:"The Language of Whales", text:"Humpback whales produce complex sequences of sounds that researchers call songs. These songs can last for hours and travel hundreds of kilometres through the ocean. What makes humpback communication particularly remarkable is that the songs change over time. A new phrase will appear in one whale's song, and within months, whales across entire ocean basins have adopted it. Scientists do not yet fully understand what the songs communicate. Some researchers believe they play a role in mating, while others think they may serve social functions we have not yet identified. The existence of cultural transmission among whales raises profound questions about the nature of animal intelligence." },
+    { title:"The Silk Road", text:"The Silk Road was not a single road but a vast network of trade routes connecting China to the Mediterranean world for more than a thousand years. Merchants traveled portions of the route carrying silk, spices, glassware, precious metals, and ideas. Buddhism spread from India to China along these paths. Papermaking techniques traveled westward from China to the Islamic world and eventually to Europe. The bubonic plague that devastated fourteenth century Europe may have traveled the Silk Road as well. The routes remind us that human civilization has always been shaped by connection and exchange, and that the boundaries we draw between cultures are more permeable than they appear." },
+    { title:"Becoming a Surgeon", text:"My cousin Fatima decided she wanted to become a surgeon when she was twelve years old. Everyone thought it was a phase. Fatima was not phased. She studied ferociously through secondary school, earned top marks in university science courses, applied to medical school three times before being accepted, and spent five brutal years completing her residency. Last year she performed her first solo surgery. When I asked her what kept her going through years of doubt and exhaustion, she said simply: 'I kept imagining the day I would save someone's life.' She has now saved many." },
+    { title:"How Memory Works", text:"Human memory is not a recording. It is a reconstruction. Each time you remember an event, your brain reassembles it from stored fragments, filling in gaps with assumptions and details drawn from other experiences. This means that memories can shift subtly each time they are recalled. Research by psychologist Elizabeth Loftus demonstrated that people can be led to believe, with complete confidence, that they remember events that never occurred. The implications of this discovery for courtroom eyewitness testimony were dramatic and have led to significant reforms in how witness evidence is treated by legal systems around the world." },
+    { title:"The Cold Mountain", text:"When a team of climbers set out to summit a remote peak in the Himalayas, they expected the usual dangers: altitude sickness, treacherous weather, frostbite. What they did not expect was getting pinned in their tents for six straight days by a blizzard. They were forced to ration their food, take turns sleeping to monitor each other for signs of hypothermia, and remain calm when the wind threatened to tear the tent from the snow. On the seventh morning the storm lifted. They reached the summit two days later. The team leader said afterward that the mountain had not tested their technical skill. It had tested their patience, their trust in each other, and their refusal to panic." },
+  ],
+  M: [
+    { title:"The Mathematics of Music", text:"The connection between mathematics and music is ancient and deep. The philosopher Pythagoras noticed that strings with simple ratio lengths, such as two to one or three to two, produced intervals that sounded harmonious together. This was one of the first observations in history that the natural world operates according to mathematical principles. Modern music theory is built on these ratios. When you hear a chord that sounds beautiful or a dissonance that creates tension, you are hearing the physics of vibrating air expressed as emotion. Mathematicians and musicians, it turns out, are engaged in very similar work: finding patterns and rules in a world of infinite complexity." },
+    { title:"A City Made of Salt", text:"In the Bolivian highlands at an altitude of nearly four thousand metres, the Salar de Uyuni is the world's largest salt flat, stretching across ten thousand square kilometres. During the dry season it is a blinding white plain where the horizon seems to disappear. When a thin layer of water covers its surface during the rainy season, the flat becomes the world's largest natural mirror, perfectly reflecting the sky above. The salt beneath the surface may contain more than half of the world's known lithium reserves, a mineral now essential to electric vehicle batteries. A landscape of extraordinary beauty may also hold the key to powering the future." },
+    { title:"Letters to the Future", text:"In 1939, the New York World's Fair buried a time capsule designed to be opened in five thousand years. Inside were items chosen to represent twentieth century civilization to people living in the year 6939: a woman's hat, a pack of cigarettes, seeds of food plants, a dollar bill, a Bible, and a spool of microfilm containing thousands of pages of text. The committee that chose the contents debated intensely about what their era's most important achievements were. Reading their final selections now is both funny and poignant. What would you put in a capsule for people five thousand years from now? And what would that choice reveal about our own moment?" },
+    { title:"The Polio Vaccine", text:"In the early twentieth century, polio was one of the most feared diseases in the world. It struck without warning, often leaving children paralyzed or dead. In the summer of 1952 alone, nearly fifty eight thousand cases were reported in the United States. Jonas Salk, a physician and researcher, led a team that worked for years to develop a vaccine. When trials confirmed it was safe and effective in 1955, the announcement was greeted with celebrations in cities across the country. Churches rang their bells. Schools closed for the day. Salk chose not to patent the vaccine, forgoing a personal fortune because he believed the treatment belonged to the world." },
+    { title:"My Grandmother Sang", text:"My grandmother grew up during a time when her people were not allowed to speak their own language in the schools or government buildings of the country that had absorbed their homeland. The language retreated into kitchens, into songs sung quietly at night, into prayers whispered before sleep. My grandmother kept it alive that way, syllable by syllable, song by song. She taught it to my mother, who taught fragments of it to me. When I speak it now, even imperfectly, I feel the presence of everyone who refused to let it die. Language, I have come to believe, is not simply communication. It is the memory of a people made sound." },
+  ],
+  N: [
+    { title:"The Periodic Table", text:"In 1869, the Russian chemist Dmitri Mendeleev arranged the sixty three known chemical elements in a table organized by atomic weight and recurring properties. What made his table remarkable was not just how it ordered existing knowledge, but how confidently it predicted gaps where elements not yet discovered should exist. Mendeleev described the properties of these missing elements in detail before anyone had found them. Within fifteen years, three of his predicted elements had been discovered, matching his descriptions almost perfectly. The periodic table remains one of science's most elegant achievements: a framework that brings order to the invisible architecture of everything in the universe." },
+    { title:"The Midnight Library", text:"There was a library in our town that opened only on weekend evenings. My mother called it the midnight library, though it actually closed at ten. We would go there on Friday nights, my mother and I, and move slowly through the shelves while the rest of the world slept or watched television. The librarians knew us by name. They would save books they thought we would enjoy. My mother and I read the same novels separately and then discussed them over dinner all the following week. That library closed years ago. I still consider it the most important place of my childhood." },
+    { title:"How Earthquakes Work", text:"The surface of the Earth is divided into enormous pieces called tectonic plates that move very slowly, typically a few centimetres per year. Where these plates meet, they slide past each other, collide, or pull apart. When pressure that has been building along a fault line is suddenly released, the ground shakes. The point below the surface where the rupture begins is called the focus. The point on the surface directly above it is the epicenter. The energy radiates outward as seismic waves that shake the ground for hundreds of kilometres. Seismologists measure earthquake magnitude on the Richter scale, where each point represents a tenfold increase in ground motion amplitude." },
+    { title:"Running the Country Road", text:"Every morning before school for three years, I ran the same five kilometre loop along the country road outside our house. In winter I ran in darkness, my breath fogging in the cold air. In spring I watched the fields transform from frozen mud to green. I ran on the day my grandfather died. I ran on the day I received my acceptance letter. The road did not care about any of it, which was exactly why I needed it. There is a kind of thinking that can only happen when your body is moving rhythmically through familiar space and your mind is left to sort itself out." },
+    { title:"What Coins Reveal", text:"Ancient coins are among archaeologists' most valuable sources of historical information. A coin's design typically includes the image of a ruler, a deity, or a symbol of the issuing city, along with an inscription. From these details, scholars can determine when and where a coin was made, who held political power at the time, and what values the society wanted to project. The distribution patterns of coins found across excavation sites reveal trade routes, migration patterns, and the extent of ancient empires. A small disc of bronze or silver, no larger than your thumb, can contain an entire chapter of human history." },
+  ],
+  O: [
+    { title:"The Arctic Tern", text:"The Arctic tern holds the record for the longest annual migration of any animal on Earth. Each year these small seabirds travel from their breeding grounds in the Arctic to the Antarctic and back again, a round trip of approximately seventy thousand kilometres. In a lifetime of roughly thirty years, a single Arctic tern may travel the equivalent of three trips to the moon and back. Researchers tracking the birds discovered that they do not travel in straight lines but follow curved paths that take advantage of prevailing wind systems, effectively surfing the atmosphere across hemispheres. Migration, it turns out, is not just endurance. It is also precision engineering." },
+    { title:"The Printing Press", text:"When Johannes Gutenberg developed his movable type printing press around 1440, he likely did not anticipate that he was setting off one of the most consequential revolutions in human history. Before the press, books were copied by hand, a process so slow and expensive that most people never owned a book in their lives. Within fifty years of Gutenberg's invention, an estimated twenty million books were in circulation across Europe. Literacy rates began to climb. Scientific ideas that might once have remained confined to a single monastery or university now traveled rapidly across the continent. The Reformation, the Scientific Revolution, and the Enlightenment are all unthinkable without the printing press." },
+    { title:"Night Shift", text:"My mother worked the night shift at the hospital for ten years. She would leave our apartment at ten in the evening and return just as my brother and I were waking up for school. She would sit at the kitchen table in her scrubs, still smelling of antiseptic, and eat cereal while we ate toast, and we would all talk for half an hour before she went to sleep. When I was older, I understood what those half hours cost her. She was running on no sleep, but she sat with us anyway, every single morning. I have tried to model my own priorities on hers." },
+    { title:"Mapping the Brain", text:"The human brain contains approximately eighty six billion neurons, each connected to thousands of others through synaptic connections that number in the hundreds of trillions. Neuroscientists have spent decades attempting to map these connections, a project called the connectome. The complete connectome of a tiny roundworm with just three hundred and two neurons was first mapped in 1986 and required more than a decade of work. The idea of mapping all the connections in a human brain is almost incomprehensibly ambitious. Yet researchers continue to make progress, driven by the belief that understanding how the brain is wired is the first step toward understanding consciousness, memory, and mental illness." },
+    { title:"The Cartographer's Daughter", text:"My great great grandmother was a cartographer's daughter in nineteenth century Vienna. Her father made maps of far places he had never visited, working from the accounts of explorers and missionaries and merchants. She told her children that she grew up reading the world in symbols: the lines that meant mountains, the blue that meant rivers, the stippling that meant desert. When she eventually emigrated, she carried a rolled map of her destination inside her coat. She said she found it comforting, that feeling of knowing the shape of the place you are going toward, even when everything else is uncertain. My family has always been map people." },
+  ],
+  P: [
+    { title:"The Bystander Effect", text:"In 1964, a woman named Kitty Genovese was attacked outside her apartment building in New York City. Newspaper reports at the time claimed that thirty eight neighbors had witnessed the attack but not one had called for help. This case prompted psychologists John Darley and Bibb Latané to conduct a series of experiments exploring why people sometimes fail to act in emergencies when others are present. They found that the more bystanders there are, the less likely any individual is to help, a phenomenon they called diffusion of responsibility. Each person assumes someone else will act. Understanding this effect has led to important changes in first aid training: emergency responders are now taught to point directly at a single person and say 'you, call an ambulance,' removing the ambiguity that enables diffusion." },
+    { title:"The Understudy", text:"I had been rehearsing the role of understudy for the school play for six weeks when the lead actor broke his wrist three days before opening night. The director looked at me with an expression that contained apology and expectation in equal measure. I barely slept for the next three nights. I walked through our apartment rehearsing lines under my breath. I stood in front of the mirror working on gestures. On opening night, I stood in the wings listening to the audience settling into their seats and felt something shift inside me. It was not confidence exactly. It was readiness. I walked out onto the stage and became someone I had never been before." },
+    { title:"What Darwin Saw", text:"When Charles Darwin arrived in the Galápagos Islands in 1835 aboard the research vessel HMS Beagle, he was a young naturalist with conventional religious views about the origin of species. What he found on those remote volcanic islands gradually forced him to reconsider everything. The finches, the tortoises, the mockingbirds — all varied from island to island in ways that suggested they had adapted to local conditions over long periods of time. Darwin spent more than twenty years refining his observations and theory before publishing On the Origin of Species in 1859. The book changed humanity's understanding of life on Earth more profoundly than any scientific work before or since." },
+    { title:"Refugee Summer", text:"The summer my family arrived at the resettlement centre, my mother had three hundred dollars, two suitcases, and a folder of documents she carried everywhere. We had left most of what we owned in a rented room we had lived in for eleven months while waiting. I was fourteen, old enough to understand what had been lost and what we were attempting. The volunteers at the centre were kind. A woman named Patricia had been helping refugee families resettle for fifteen years. She showed us where the food bank was, helped us navigate the registration systems, and wrote down every appointment in a calendar she taped to our refrigerator. She was the first person in the new country who learned our names." },
+    { title:"Tectonic Civilizations", text:"The historian Felipe Fernández Armesto has argued that geography is destiny, that the physical features of a landscape profoundly shape the civilizations that develop within it. River valleys with annual flooding and rich silt deposits tend to produce agricultural surpluses that allow cities to grow. Mountain ranges create barriers that can either isolate cultures or funnel trade through predictable passes. Island nations develop naval technologies out of necessity. These geographic determinants do not override human agency or creativity, but they create conditions within which societies must operate. To understand why civilizations developed differently in different parts of the world, you must first understand the ground beneath their feet." },
+  ],
+  Q: [
+    { title:"The Language of Numbers", text:"Numerical cognition, the ability to understand and manipulate quantities, appears to be built into the human brain. Infants as young as five months old show surprise when one object plus one object produces a result other than two objects, suggesting that basic arithmetic is grasped before language is acquired. Yet cultural and linguistic factors profoundly shape how mathematical thinking develops. Languages that have simple, regular number words, such as Chinese, appear to give children an advantage in learning arithmetic. Some languages have words for only 'one,' 'two,' and 'many.' The speakers of these languages can still reason about quantity, but they do so differently. Mathematics is simultaneously a universal language and a cultural artifact." },
+    { title:"The Siege of Leningrad", text:"From September 1941 to January 1944, the city of Leningrad in the Soviet Union was surrounded and besieged by German forces for eight hundred and seventy two days. More than a million civilians died, most from starvation and cold. During the worst winter, the daily bread ration fell to one hundred and twenty five grams per person. Yet the city's cultural life continued. An orchestra performed Shostakovich's Seventh Symphony, composed during the siege, in the besieged city's concert hall. The composer dedicated the work to the city's struggle. That performance, broadcast by radio across the Soviet Union, became a symbol of human dignity's refusal to be extinguished even under the most extreme conditions imaginable." },
+    { title:"Building the Argument", text:"The summer before I applied to university, I spent three months studying formal argumentation with a retired debate coach who lived three blocks from my house. She taught me that an argument is not a fight. It is a structure. Every claim requires evidence. Every piece of evidence requires a source. Every conclusion must follow logically from its premises. She made me rebuild every paper I had ever written. She showed me how many of my most confident assertions dissolved the moment I tried to support them properly. By September I had produced one rigorously argued essay on a topic I had chosen myself. She read it twice and said, 'Now you can think.' I have been trying to live up to that remark ever since." },
+    { title:"The Speed of Stars", text:"When you look at the night sky and see a star, you are not seeing the star as it exists now. You are seeing light that left the star years, decades, centuries, or even millions of years ago, depending on the star's distance. The nearest star to our sun, Proxima Centauri, is so far away that its light takes four point two years to reach us. The stars in the Andromeda Galaxy, visible to the naked eye on a clear night, are so distant that the light reaching your eyes left them over two million years ago. Astronomy is, among other things, a form of time travel. Every time you look up, you are looking back." },
+    { title:"Three Winters", text:"My family spent three consecutive winters in a cabin without electricity in northern Quebec because my father was writing his doctoral thesis and believed he needed complete quiet and complete cold. We had oil lamps and a woodstove and a radio that picked up two stations. My mother heated water for washing. My sister and I did our schoolwork at the kitchen table and skated on the frozen river behind the property when the lessons were done. I resented it intensely at the time. But those three winters gave me something I cannot name precisely: a knowledge that I can do without things I thought I needed, a sense that quiet is not empty. I return to that knowledge often." },
+  ],
+  R: [
+    { title:"Systemic Change", text:"The sociologist C. Wright Mills distinguished between 'personal troubles' and 'public issues.' When one person loses their job, that is a personal trouble. When millions lose their jobs simultaneously, it becomes a public issue requiring structural analysis. Mills argued that the capacity to see this connection, to understand how private experience is shaped by social forces, is the most valuable intellectual tool a citizen can possess. He called this the sociological imagination. It does not diminish individual responsibility or agency, but it insists on placing personal life within a larger framework of history, institutions, and power. Without this imagination, Mills believed, we will misdiagnose the most serious problems we face as societies." },
+    { title:"The Negotiator", text:"My aunt spent twenty years as a hostage negotiator for an international humanitarian organization. She was deployed to four continents and participated in over eighty negotiations. I once asked her what the most important thing she had learned was. She thought for a long time. Then she said: people who do terrible things are almost always convinced they have no other choice. The negotiator's job is to create the perception of a choice, to make visible an exit that the other person cannot see. She said the work had made her deeply uncomfortable with simple moral categories of good and evil. She had sat across tables from people who had done monstrous things and found in every case something human looking back at her." },
+    { title:"The Fermentation of Ideas", text:"The historian of science Steven Shapin has written about the coffee houses of seventeenth century London as one of the most important institutions in the development of modern science. These public spaces, open to anyone who could pay for a cup, became informal exchanges where merchants, scholars, craftsmen, and gentlemen met to argue about the news, discuss experiments, and share the contents of recently arrived letters from correspondents across Europe. The Royal Society, founded in 1660, grew directly out of meetings that had taken place in coffee houses. The greatest ideas in history have rarely emerged from isolated geniuses working alone. They have emerged from conversations, arguments, and the productive collision of different kinds of knowledge." },
+    { title:"A Map of Scars", text:"At seventeen I had a surgery that left a long scar running along my left side. I was self conscious about it for years. I wore certain clothes, avoided certain situations, carried it as a kind of secret. Then in my twenties I met an older woman who had a very visible scar across her face from a car accident in her youth. I asked her how she had come to accept it. She said she had simply decided to stop apologizing for her own survival. The scar, she told me, was a record, not a flaw. It documented something she had been through and come out the other side of. Since that conversation I have thought of my own body differently, as a kind of ongoing autobiography rather than a standard I am failing to meet." },
+    { title:"The Weight of a Library", text:"When the scholar Jorge Luis Borges was appointed director of the Argentine National Library in 1955, he was also going blind. He later wrote that God had given him eight hundred thousand books and darkness simultaneously. Borges spent the remaining years of his sight reading everything he could, building in his memory a library he could access without eyes. His stories and essays are saturated with the knowledge accumulated in those years. They are also saturated with a particular awareness of limitation, of the gap between what can be known and what any single mind can hold. Borges understood that every library is infinite and every reader is mortal, and he made that impossible mathematics the subject of his life's work." },
+  ],
+  S: [
+    { title:"Convergent Evolution", text:"Convergent evolution is the phenomenon by which unrelated species independently develop similar traits in response to similar environmental pressures. The eye, for example, evolved independently in vertebrates and cephalopods, yet both arrived at remarkably similar optical structures. Dolphins and sharks share a streamlined body shape despite one being a mammal and the other a fish. The marsupial wolf of Australia, now extinct, was strikingly similar in form and likely behavior to the placental wolves of other continents, despite having been separated for millions of years. Evolution does not follow a single path, but it keeps arriving at some of the same solutions. This suggests that the forms life can take are constrained by physics and ecology into a finite set of viable designs." },
+    { title:"The Promise of Infrastructure", text:"The historian Tony Judt argued that the gradual dismantling of public infrastructure, transit systems, libraries, parks, and schools, amounts to an erosion of the shared spaces through which strangers become fellow citizens. When public life is relegated to private substitutes, those who can afford the substitutes withdraw from common experience. The infrastructure that remains, underfunded and deteriorating, is used only by those who have no alternatives. The result is not merely inconvenience but the fragmentation of a society's capacity to experience itself as a community. Judt believed that democracies that neglect their public spaces are engaged in a slow process of self dissolution, trading civic identity for private comfort." },
+    { title:"Fieldwork", text:"When I arrived at my field site in the highlands of Ethiopia for my doctoral research, I had three suitcases, a research design I had spent two years developing, and a set of assumptions about the community I intended to study that turned out to be almost entirely wrong. The first month was a process of methodical humiliation. Every interview I conducted revealed gaps in my understanding. Every observation I made had to be revised in light of context I had not known to look for. A colleague who had worked in the region for a decade told me this was normal, that the most important thing fieldwork teaches researchers is what their questions have left out. I began again from nearly the beginning. The dissertation I eventually wrote bore little resemblance to the one I had planned." },
+    { title:"The Pianist's Hands", text:"The concert pianist asked me, during a conversation I conducted for a music magazine, whether I had ever considered how much trust is involved in playing from memory before an audience. I had not. She explained. When you perform from memory, she said, you are trusting your body to know something your conscious mind cannot hold. You have practiced the piece so many thousands of times that it has moved below awareness, into muscle and reflex. If you try to think your way through a performance, you will almost certainly fail. The knowledge required is too complex and too fast for conscious processing. What I do on stage, she said, is mostly listening. Listening to what my hands already know." },
+    { title:"Civil Disobedience", text:"Henry David Thoreau spent one night in jail in 1846 for refusing to pay a tax he considered unjust, and from that experience produced one of the most influential political essays in American history. Thoreau argued that individuals have a moral obligation to refuse to cooperate with unjust laws, even at personal cost. The essay was read by Mahatma Gandhi, who developed from it a philosophy of nonviolent resistance that proved capable of challenging an empire. Gandhi's methods were later studied and adapted by Martin Luther King Jr. and the American civil rights movement. A single night in a Massachusetts jail produced a chain of influence that changed the political history of three continents over a century." },
+  ],
+  T: [
+    { title:"The Ship of Theseus", text:"The Ship of Theseus is one of philosophy's oldest thought experiments. According to Greek legend, the ship that carried the hero Theseus was preserved in Athens for centuries as a monument. As its planks rotted, they were replaced one by one with new wood. Eventually every original plank had been replaced. The question the Athenians debated was: is it still the same ship? Philosophers have extended the puzzle in various ways. Suppose someone had collected all the original planks and reassembled them. Which would be the real Ship of Theseus? The paradox remains genuinely unresolved and has implications for questions about personal identity, the continuity of nations, and the nature of cultural heritage." },
+    { title:"Invisible Architectures", text:"Anthropologists who study urban environments have noted that cities contain two kinds of structure. The first is visible: the buildings, streets, parks, and infrastructure that can be seen and measured. The second is invisible: the unwritten conventions, social hierarchies, and shared assumptions that govern how people move through and use those physical spaces. These invisible architectures are often more powerful than the visible ones. Zoning laws can desegregate a neighborhood on paper while unwritten social rules maintain its character unchanged for generations. The physical and the social shapes of a city are always in dialogue with each other, and neither can be fully understood without the other." },
+    { title:"The Archive", text:"For six months I worked as a volunteer in a regional historical archive, cataloguing letters and photographs donated by local families. Most of the material would interest no one but a specialist. But occasionally I would open a folder and find something that stopped me completely: a photograph of a street that had been demolished, with people in it who had no idea they were about to be historical; a letter written in 1943 by a young soldier to his mother, matter of fact and homesick; a child's drawing pinned to a page by someone who had thought it worth keeping. Archives are not neutral repositories. They are monuments to what someone decided mattered enough to save, and as revealing in their omissions as in their contents." },
+    { title:"Measuring Inequality", text:"Economists use a statistic called the Gini coefficient to measure income inequality within a country. A Gini coefficient of zero indicates perfect equality, in which every person earns the same income. A coefficient of one indicates maximum inequality, in which one person earns all income and everyone else earns nothing. Real countries fall somewhere between these extremes. The Gini coefficient is useful as a summary measure, but it conceals as much as it reveals. Two societies can have identical Gini coefficients while distributing inequality very differently across their populations. Effective analysis of inequality requires multiple tools, including data on intergenerational mobility, wealth distribution distinct from income, and access to public services." },
+    { title:"The Apology", text:"My best friend and I did not speak for nearly two years after an argument that began over something trivial and escalated into an exchange of truths we had each been careful to avoid saying. When we finally met again, at a mutual friend's wedding, the two years sat between us at the table like a third guest. Neither of us mentioned it at first. We talked about everything else. Then, late in the evening, he said simply: 'I'm sorry I said what I said the way I said it.' Not: I'm sorry if you were hurt. Not: I'm sorry, but. Just the unqualified acknowledgment that he had caused harm. I said the same. We both understood that the apology did not undo what had been said. It was an admission that something mattered enough to repair." },
+  ],
+  U: [
+    { title:"Epigenetics and Inheritance", text:"Classical genetics teaches that the characteristics we inherit from our parents are encoded in the DNA sequence of our chromosomes. Epigenetics studies a second layer of inheritance: modifications to the way genes are expressed that do not alter the underlying DNA sequence but can nevertheless be passed from one generation to the next. Research on populations that experienced severe famine has found that the effects can be measurable in the health profiles of grandchildren. Stress hormones experienced by pregnant women can alter gene expression patterns in their offspring. These findings require us to complicate the simple nature versus nurture framework. Our biology responds to our environment in ways that can echo forward through time in ways we are only beginning to understand." },
+    { title:"The Architecture of Attention", text:"The philosopher Simone Weil wrote that 'attention is the rarest and purest form of generosity.' She meant something precise by this: that to give another person your full, disinterested attention, without planning what you will say next or how the interaction will serve you, is an act of profound respect. Most of our attention is selective and self interested. We notice what confirms our expectations, what affects our interests, what entertains us. Weil's insight, grounded in her contemplative practice, was that genuine attention requires the suspension of the self. It is a discipline, she argued, not a capacity. It must be trained. The implications for education, therapy, political dialogue, and friendship are considerable." },
+    { title:"The River Engineers", text:"The Mississippi River has been so extensively engineered over the past century and a half that many hydrologists no longer consider it a natural system. A network of locks, dams, levees, and navigation channels constrains the river within banks that prevent it from following its natural tendency to meander and change course. These engineering works were built to protect farmland, facilitate barge traffic, and prevent flooding. They have succeeded on their own terms. But hydrologists have observed that preventing a river from flooding also prevents it from depositing the sediment that builds and maintains delta land. The Louisiana coast is losing land at a rate of a football field every hour, in part because the river is prevented from doing the geological work it has done for millennia." },
+    { title:"The Translator's Dilemma", text:"Every translator faces a version of the same impossible choice: fidelity to the original text or fidelity to the experience the original text produces in its readers. A poem that achieves its effect through wordplay that exploits features unique to its source language cannot be rendered faithfully in another language while also preserving its effect. The translator must choose what to sacrifice. Gregory Rabassa, the American translator of Gabriel García Márquez, said that the author told him his Spanish original was simply a rough draft and that the English translation was the real book. This was generosity toward the translator's art, but it also captured something true: that translation is not reproduction. It is a creative act performed in the shadow of another creative act." },
+    { title:"What the Glacier Remembers", text:"Glaciologists can extract ice cores from glaciers that contain atmospheric samples going back hundreds of thousands of years. Trapped air bubbles in the ice preserve samples of the atmosphere as it existed when the ice formed. By analyzing these bubbles, researchers can determine the concentration of greenhouse gases and even something about global temperatures at the time of formation. The ice cores from Antarctica have given scientists a detailed record of climate over the past eight hundred thousand years, covering eight complete glacial cycles. This record allows us to place current atmospheric changes in historical context. What that context reveals is that the rate of change we are currently observing is without precedent in the entire record the ice preserves." },
+  ],
+  V: [
+    { title:"The Banality of Evil", text:"The philosopher Hannah Arendt attended the 1961 trial of Adolf Eichmann, one of the principal organizers of the Holocaust, and reported on it for The New Yorker. She expected to find a monster. What she found instead was, in her words, terrifyingly normal: a bureaucrat who had done his job with technical efficiency and who, in the dock, seemed incapable of independent thought or genuine moral reflection. Arendt coined the phrase 'the banality of evil' to describe this phenomenon: the capacity for enormous harm to be perpetuated by ordinary people who have subordinated their moral judgment to institutional loyalty and career advancement. Her analysis remains deeply controversial. Critics argue that she underestimated Eichmann's ideological commitment. But the core question she raised, about how ordinary participation in institutional processes can enable atrocity, has not lost its urgency." },
+    { title:"The Visible and Invisible Curriculum", text:"Educational theorists distinguish between the explicit curriculum, the subject matter and skills officially taught in schools, and the hidden curriculum, the attitudes, dispositions, and social relations that are transmitted implicitly through the organization of schooling itself. Students learn not only mathematics and reading but also how to relate to authority, when to speak and when to stay silent, how to compete and how to cooperate, and which kinds of knowledge count as valuable. Critics argue that the hidden curriculum in many school systems reproduces existing social hierarchies by teaching working class children to defer and professional class children to lead, while framing this differential socialization as natural and meritocratic." },
+    { title:"Returning", text:"After seven years working abroad, I returned to the city where I had grown up to find it recognizable in structure but alien in texture. The buildings were mostly the same but the businesses inside them had changed. The neighborhood I had lived in had gentrified beyond the economic reach of the people who had given it its character. Several friends had left. The ones who remained had been shaped by years of experience I had not shared. The philosopher Thomas Wolfe wrote that you can't go home again, meaning not that home disappears but that you do: the self who would have recognized it unreservedly is irrecoverable. Coming back is always also an encounter with the person you chose not to become by leaving." },
+    { title:"The Immune System", text:"The human immune system is among the most sophisticated biological systems known to science. It must distinguish, with high accuracy, between the body's own cells and foreign invaders, between harmless environmental particles and genuine pathogens, between cells that have become cancerous and those that are functioning normally. It does this through an extraordinarily complex communication network involving multiple types of specialized cells, chemical messengers called cytokines, and genetic processes that generate novel receptor proteins capable of recognizing pathogens the immune system has never previously encountered. When this system malfunctions, the consequences range from chronic infection to autoimmune disease, in which the immune system attacks the body's own tissue. Immunology remains one of the most active frontiers of medical research." },
+    { title:"The Philosopher and the Prisoner", text:"The Stoic philosopher Epictetus was born into slavery in the first century CE and spent his early years as the property of a freedman in the household of the Roman emperor Nero. His owner reportedly broke his leg as a demonstration of absolute power. Epictetus reportedly said, while it was being broken, 'You will break it.' And when it was broken, 'Did I not tell you that you would break it?' The story may be apocryphal, but it captures the philosophy Epictetus later developed and taught as a free man. The Stoics argued that the only things truly within our control are our own judgments, desires, and responses to events. External circumstances, including the worst circumstances imaginable, can be endured with dignity if we refuse to locate our freedom in anything that can be taken away." },
+  ],
+  W: [
+    { title:"Complexity and Emergence", text:"One of the most striking phenomena in nature is emergence: the appearance of properties or behaviors at the level of a system that cannot be predicted from the properties of the system's individual components. The wetness of water cannot be derived from the properties of a single water molecule. The consciousness of a human brain cannot be explained by the behavior of a single neuron. The organized colony behavior of ants cannot be found in any individual ant. Emergence challenges reductionist approaches to science, which hold that understanding a system's parts is sufficient to understand the system itself. Complex systems, from economies to ecosystems to social movements, routinely exhibit emergent behaviors that surprise even the experts most familiar with their components." },
+    { title:"The Ethics of Memory", text:"Philosopher Paul Ricoeur argued that communities, like individuals, have a responsibility toward the past, but that this responsibility involves a delicate balance. Too much remembrance, he suggested, can become a form of resentment that prevents the work of reconciliation and forward movement. Too little is a form of dishonesty that falsifies the historical conditions that shaped the present. The question of how societies should remember atrocity, trauma, and injustice, how much should be commemorated, taught, and publicly acknowledged, has no universal answer. What Ricoeur insisted upon was that the question must be taken seriously: that forgetting, when it is chosen rather than inevitable, is a moral act with moral consequences." },
+    { title:"The Wilderness Essay", text:"When Robert MacFarlane set out to document the experience of wild places in his book The Wild Places, he found himself revising his initial assumptions about what wildness means. He had begun with a romantic notion of wilderness as remote, untouched, and inhuman. What he discovered was something more subtle: that wildness is not a quality of places but of encounters, that it exists as much in a wren's nest in a city hedge as in a mountain summit above the Arctic Circle. The most profound experiences of wildness he recorded were often the most intimate: a light on moss, the behavior of a river in flood, the sensation of being cold enough that the body begins to recalculate its priorities. Wildness, he concluded, is less a geography than a practice of attention." },
+    { title:"Cognitive Load", text:"Cognitive load theory, developed by educational psychologist John Sweller in the 1980s, posits that working memory, the mental space in which we actively process information, has a strictly limited capacity. When the demands of a task exceed this capacity, learning degrades rapidly. The theory has significant implications for educational design. Complex material should be broken into components and taught sequentially rather than simultaneously. Worked examples reduce extraneous cognitive load by allowing students to observe expert performance rather than simultaneously solving problems and learning the concepts required to solve them. Novice and expert learners have fundamentally different cognitive needs, and instructional materials should be designed accordingly. What helps an expert can actively impede a novice." },
+    { title:"The Interview", text:"In the summer I turned twenty two, I traveled to interview a woman who had been a resistance courier in occupied France during the Second World War. She was ninety one and lived in a small apartment outside Lyon, and she gave me three hours of her time without apparent reservation. She described events I had read about only in books with the kind of factual precision that belongs to lived experience. But what I had not expected was her reluctance to call what she had done heroism. She said she had been frightened every single day for four years, and that fear was the honest description of her experience, not courage. She said courage was just what people called fear in retrospect, when it had turned out all right." },
+  ],
+  X: [
+    { title:"The Problem of Consciousness", text:"David Chalmers distinguished between what he called the easy problems and the hard problem of consciousness. The easy problems, despite being extraordinarily complex scientifically, are in principle solvable: how does the brain process perceptual information, integrate data from multiple senses, control behavior, and report mental states? These are questions about the mechanisms of cognition. The hard problem is different in kind. It asks why any of this processing is accompanied by subjective experience at all. Why is there something it feels like to see red, to hear music, to be in pain? Why are we not, in Chalmers' phrase, philosophical zombies, processing information identically but in complete inner darkness? The hard problem has resisted every attempt at solution and some philosophers believe it always will." },
+    { title:"The Historiography of Silence", text:"Historians have increasingly attended to what archives do not contain, to the structured absences that reveal as much about a society's power relations as the documents that survive. The lives of enslaved people in the antebellum American South, for example, appear in archives primarily as property records, transaction receipts, and occasional newspaper accounts of runaway slaves. These documents were created by and for the people who held power. The inner lives, relationships, forms of resistance, cultural practices, and economic strategies of the enslaved themselves exist in the archive only in fragments and traces, recoverable through techniques of reading against the grain that treat the gap itself as evidence. The absence is not neutral. It was produced." },
+    { title:"What We Owe the Future", text:"The philosopher William MacAskill has argued that future people, who will vastly outnumber all humans who have ever lived if civilization continues for millennia, should count in our moral calculations at least as much as people alive today. This view, which he calls longtermism, implies that decisions and policies affecting the long run trajectory of civilization, including those related to existential risks, are of moral importance that dwarfs most of what currently occupies political attention. Critics argue that the uncertainty involved in predicting long run consequences is so great as to render systematic longtermist reasoning unreliable, and that focusing on speculative future populations risks neglecting urgent needs of actual present people. The debate touches on foundational questions in ethical theory about what we owe to those who do not yet exist." },
+    { title:"On Attention and Silence", text:"The monk Thomas Merton spent twenty seven years in a Trappist monastery in Kentucky before emerging as one of the twentieth century's most widely read spiritual writers. He wrote extensively about contemplation not as the withdrawal from the world but as a form of deeper engagement with it. For Merton, silence was not the absence of sound but a quality of inner attention, a willingness to be present to experience without immediately packaging it into language and judgment. He believed that the activist's urgency and the contemplative's stillness were not opposites but complements, that action without a center of silence becomes reactive and violent, and that silence without engagement becomes evasion. The life he was trying to describe was one of rooted attentiveness." },
+    { title:"The Return of the Wolves", text:"When gray wolves were reintroduced to Yellowstone National Park in 1995 after a seventy year absence, ecologists expected the predator to affect elk populations. What they did not fully anticipate was a cascade of changes that restructured the entire ecosystem. With wolves present, elk became more wary and stopped overgrazing riverbanks and valleys where they were most exposed. Vegetation recovered along rivers, reducing erosion and stabilizing stream banks. The recovery of riparian plants attracted beavers, whose dams created wetlands. The wetlands attracted birds and amphibians. The rivers themselves changed course as their banks became more stable. This phenomenon, in which the reintroduction of a predator transforms an entire landscape through behavioral and physical cascades, is called a trophic cascade. Wolves, ecologists concluded, can change rivers." },
+  ],
+  Y: [
+    { title:"On Moral Luck", text:"The philosopher Thomas Nagel drew attention to the uncomfortable role of luck in our moral judgments. We praise and blame people on the basis of their character and choices. Yet the person we become, including our character, our choices, and even our moral commitments, is profoundly shaped by circumstances outside our control: where and when we were born, who raised us, what experiences formed us, which risks we happened to be exposed to. Nagel asked whether it makes sense to hold someone fully responsible for actions that flow from a character shaped by factors they did not choose. The question has no comfortable resolution. Our legal and moral systems presuppose a kind of freedom that may be partly illusory, yet abandoning the concept of responsibility entirely seems both impractical and wrong." },
+    { title:"The Cartography of Loss", text:"There is a practice in Japanese culture called kintsugi, the repair of broken ceramics with lacquer mixed with gold or silver powder, making the repaired object more beautiful for having been broken, the fractures themselves becoming a design. The practice embodies a philosophy: that breakage and repair are part of the object's history rather than conditions to be concealed. It is a philosophy that stands in direct contrast to the dominant Western aesthetic of concealment, in which damage is either repaired invisibly or rendered the object worthless. I return to kintsugi often when I think about the relationship between loss and identity, about whether what we have survived is something we carry as a scar or as a seam of gold." },
+    { title:"Information Ecosystems", text:"Media theorist Neil Postman argued in the 1980s that every communications technology creates a different kind of epistemic environment: a different set of conditions governing what kinds of knowledge are possible, what counts as evidence, what kinds of argument are persuasive, and what kinds of personality are culturally admired. The printing press created one kind of mind. Television created another. He was writing before the Internet. The digital information ecosystem we inhabit now has its own distinctive epistemology: it privileges speed over accuracy, provocation over nuance, consensus over verification, and affiliation over argument. Understanding the medium we inhabit is a prerequisite for thinking critically within it, and it is a form of understanding that the medium itself actively resists." },
+    { title:"The Long Apprenticeship", text:"The philosopher Michael Oakeshott argued that knowledge of how to do something, which he called practical knowledge, cannot be fully transmitted through explicit instruction or rules. It is acquired through practice in the company of someone who already possesses it. The jazz musician learns not only from the teacher's explanations but from playing alongside the teacher, absorbing patterns and responses that no lesson plan could fully articulate. The surgeon develops judgment that transcends the protocols she was taught through years of operating under supervision. The philosopher's seminars cannot replace the philosopher's study habits, which must be observed and imitated. Oakeshott believed that the modern world's enthusiasm for codifying all knowledge in explicit, teachable rules neglects something essential about how human skill actually develops." },
+    { title:"Continental Philosophy and the Everyday", text:"One of the defining concerns of twentieth century European philosophy was the phenomenological investigation of ordinary experience. Edmund Husserl argued that philosophy had to return to what he called the things themselves, the structures of lived experience prior to the theoretical abstractions of natural science. His student Martin Heidegger extended this project into an investigation of how the world appears to beings who are not detached observers but engaged participants, always already embedded in practical concerns, social relations, and historical traditions. Maurice Merleau-Ponty brought the body to the center of this analysis, arguing that perception and cognition are rooted in bodily engagement with the environment rather than in disembodied mental representation. Together these thinkers transformed philosophy's agenda by insisting that the most philosophically rich territory is the territory of ordinary life." },
+  ],
+  Z: [
+    { title:"The Extended Mind", text:"Philosophers Andy Clark and David Chalmers proposed in 1998 that the mind does not stop at the boundary of the skull. When cognitive processes are reliably offloaded onto external structures, those structures become constitutive parts of the cognitive system rather than mere tools. A notebook used by a person with memory impairment to record important information functions, on this view, as a genuine component of that person's memory, not merely as a prosthetic substitute. The smartphone has extended and transformed cognitive processes for billions of people in ways that alter what is meant by remembering, calculating, navigating, and communicating. If we accept the extended mind hypothesis, questions about the ethics and governance of technology become questions about the ethics and governance of mind itself." },
+    { title:"The Structure of Scientific Revolutions", text:"Thomas Kuhn's 1962 book transformed how philosophers, historians, and scientists think about the development of science. Kuhn argued that science does not progress through the gradual accumulation of knowledge but through episodes of revolutionary change he called paradigm shifts. Normal science operates within a paradigm, a shared framework of assumptions, methods, and standards that defines what counts as a legitimate problem and a valid solution. Anomalies that cannot be explained within the paradigm accumulate until a crisis produces a revolutionary restructuring of the entire framework. Copernicus, Darwin, Einstein, and Watson and Crick each produced paradigm shifts that could not have been predicted from within the paradigm they displaced. Kuhn's work raised uncomfortable questions about the objectivity of science and the rationality of theory change that continue to be debated." },
+    { title:"A Theory of Justice", text:"John Rawls published A Theory of Justice in 1971 and permanently altered the landscape of Anglo American political philosophy. Rawls argued for a conception of justice based on what principles rational people would choose from behind a 'veil of ignorance,' not knowing their place in society, their class position, their fortune in the distribution of natural assets, their intelligence or strength, their conception of the good, or the generation they belong to. He believed that from this original position, rational agents would choose principles that protect basic liberties for all and permit inequalities only when they benefit the least advantaged members of society. Critics challenged his conception of rationality, his assumptions about what people would choose, and his construction of the original position itself. But even his critics had to contend with the framework he had established." },
+    { title:"The Grammar of Uncertainty", text:"There is a grammatical distinction in some languages between statements about things you have witnessed directly and statements about things you have learned from others or inferred. In Turkish, the suffix used determines whether the speaker is asserting direct knowledge or reported information. Languages with this feature, called evidentiality, require speakers to make explicit the epistemic status of every claim they make. English has no such grammatical requirement. We can assert hearsay and observation in identical syntactic form. Linguists have debated whether speakers of languages with evidential markers are in fact more careful about distinguishing knowledge from inference. The question, unresolved, points toward something important about the relationship between the structures of language and the habits of epistemically responsible thinking." },
+    { title:"After the Archive", text:"The historian Arlette Farge, writing about her work in the archives of eighteenth century France, described the experience of encountering historical documents not as the neutral extraction of information but as a kind of haunting. The voices in the documents, police interrogations of men and women picked up for minor infractions, requests for poor relief, denunciations filed between neighbors, are vivid and particular in ways that resist absorption into historical generalization. They insist on their singularity. Farge wrote about the ethical responsibility this creates for the historian: the obligation not to dissolve individual lives into categories and patterns, to hold the tension between the general analysis that makes the past intelligible and the particular life that resists every generalization. The historian's task, she argued, is always simultaneously structural and intimate." },
+  ],
+};
+
+// ════════════════════════════════════════════════════════
+//  READING TIPS per level band
+// ════════════════════════════════════════════════════════
+const TIPS = {
+  early:  { title:"📌 Reading Tip", text:"Point to each word as you read. Take your time — every word matters!" },
+  mid:    { title:"📌 Reading Tip", text:"Read the whole sentence first, then go back if a word is tricky." },
+  fluent: { title:"📌 Reading Tip", text:"Try to read smoothly without stopping. Use expression in your voice!" },
+  adv:    { title:"📌 Reading Tip", text:"Focus on phrasing and punctuation — let commas and periods guide your pace." },
+};
+
+function getTip(lvlId) {
+  const early  = ['AA','A','B','C','D','E'];
+  const mid    = ['F','G','H','I','J','K','L'];
+  const fluent = ['M','N','O','P','Q','R'];
+  if (early.includes(lvlId))  return TIPS.early;
+  if (mid.includes(lvlId))    return TIPS.mid;
+  if (fluent.includes(lvlId)) return TIPS.fluent;
+  return TIPS.adv;
+}
+
+// ════════════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════════════
+const STREAK_UP   = 2;
+const STREAK_DOWN = 2;
+const ACCURACY_OK   = 0.90;
+const ACCURACY_FAIL = 0.85;
+
+let levelIdx       = 0;   // index into LEVELS array
+let successStreak  = 0;
+let failStreak     = 0;
+let storyIdx       = 0;   // which story within the level
+let currentBook    = null;
+let capturedTranscript   = '';
+let prevTranscript       = '';
+let latestTranscript     = '';
+let isManuallyStopping   = false;
+let recognition          = null;
+
+// ════════════════════════════════════════════════════════
+//  LEVEL PICKER
+// ════════════════════════════════════════════════════════
+function buildLevelGrid() {
+  const grid = document.getElementById('level-grid');
+  grid.innerHTML = '';
+  LEVELS.forEach((lv, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'lvl-btn' + (i === levelIdx ? ' active' : '');
+    btn.textContent = lv.label;
+    btn.title = lv.desc;
+    btn.onclick = () => selectLevel(i);
+    grid.appendChild(btn);
+  });
+}
+
+function selectLevel(i) {
+  levelIdx = i;
+  successStreak = 0;
+  failStreak = 0;
+  storyIdx = 0;
+  buildLevelGrid();
+  updateHeader();
+  // Show story panel, hide picker
+  document.getElementById('level-picker').style.display = 'none';
+  document.getElementById('story-panel').style.display = 'block';
+  document.getElementById('results-area').style.display = 'none';
+  loadStory();
+}
+
+function showLevelPicker() {
+  buildLevelGrid();
+  document.getElementById('level-picker').style.display = 'block';
+  document.getElementById('story-panel').style.display = 'none';
+  document.getElementById('results-area').style.display = 'none';
+}
+
+// ════════════════════════════════════════════════════════
+//  HEADER
+// ════════════════════════════════════════════════════════
+function updateHeader() {
+  const lv = LEVELS[levelIdx];
+  document.getElementById('hdr-level').textContent = lv.label;
+  document.getElementById('hdr-desc').textContent  = lv.desc;
+  const bar = document.getElementById('streak-bar');
+  bar.innerHTML = '';
+  for (let i = 0; i < STREAK_UP; i++) {
+    const d = document.createElement('div');
+    d.className = 's-dot' + (i < successStreak ? ' on' : '');
+    bar.appendChild(d);
+  }
+  if (failStreak > 0) {
+    const d = document.createElement('div');
+    d.className = 's-dot warn';
+    bar.appendChild(d);
+  }
+  // Progress bar
+  const pct = (successStreak / STREAK_UP) * 100;
+  const fill = document.getElementById('prog-fill');
+  if (fill) fill.style.width = pct + '%';
+  const prog = document.getElementById('prog-count');
+  if (prog) prog.textContent = successStreak + ' / ' + STREAK_UP + ' reads to advance';
+  const lbl = document.getElementById('prog-label');
+  if (lbl) lbl.textContent = 'Level ' + lv.label + ' Progress';
+  // Pills
+  const lp = document.getElementById('story-level-pill');
+  if (lp) lp.textContent = 'Level ' + lv.label + ' · ' + lv.desc;
+}
+
+// ════════════════════════════════════════════════════════
+//  STORY LOADING
+// ════════════════════════════════════════════════════════
+function loadStory() {
+  const lv = LEVELS[levelIdx];
+  const pool = STORIES[lv.id];
+  // Cycle through stories in order
+  storyIdx = storyIdx % pool.length;
+  currentBook = pool[storyIdx];
+  storyIdx++;
+
+  const np = document.getElementById('story-num-pill');
+  if (np) np.textContent = 'Story ' + storyIdx + ' of ' + pool.length;
+
+  updateHeader();
+  renderStory();
+  document.getElementById('results-area').style.display = 'none';
+}
+
+function renderStory() {
+  const lv  = LEVELS[levelIdx];
+  const tip = getTip(lv.id);
+  document.getElementById('story-area').innerHTML = `
+    <div class="tip-box slide-up">
+      <div class="tip-title">${tip.title}</div>
+      ${tip.text}
+    </div>
+    <div class="story-box slide-up">
+      <div class="story-title">${esc(currentBook.title)}</div>
+      <p class="story-text">${esc(currentBook.text)}</p>
+      <div id="transcript-live" style="display:none;" class="live-hint"></div>
+    </div>`;
+  document.getElementById('mic-controls').style.display = 'block';
+  resetMic();
+}
+
+// ════════════════════════════════════════════════════════
+//  SPEECH RECOGNITION
+// ════════════════════════════════════════════════════════
+function initSpeech() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    document.getElementById('mic-controls').innerHTML =
+      '<p style="color:#f43f5e;font-weight:700;text-align:center;padding:12px;">⚠️ Speech recognition requires Chrome or Edge browser.</p>';
+    return;
+  }
+  recognition = new SR();
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.lang = 'en-US';
+
+  recognition.onresult = (e) => {
+    let session = '';
+    for (let i = 0; i < e.results.length; i++) session += e.results[i][0].transcript;
+    const full = (prevTranscript + ' ' + session).trim();
+    capturedTranscript = full;
+    latestTranscript = full;
+    const el = document.getElementById('transcript-live');
+    if (el) { el.style.display = 'block'; el.textContent = '"' + full.slice(-140) + '…"'; }
+  };
+
+  recognition.onend = () => {
+    if (!isManuallyStopping) {
+      prevTranscript = latestTranscript;
+      try { recognition.start(); } catch(e) {}
+    }
+  };
+
+  recognition.onerror = (e) => {
+    if (e.error === 'not-allowed') {
+      alert('Microphone permission denied. Please allow microphone access in your browser and try again.');
+      resetMic();
+    }
+  };
+}
+
+function startListening() {
+  if (!currentBook) return;
+  if (!recognition) { initSpeech(); if (!recognition) return; }
+  isManuallyStopping = false;
+  prevTranscript = ''; latestTranscript = ''; capturedTranscript = '';
+
+  let count = 3;
+  const mc = document.getElementById('mic-controls');
+  mc.innerHTML = `<div class="countdown-disp">${count}</div>`;
+  const timer = setInterval(() => {
+    count--;
+    if (count === 1) { try { recognition.start(); } catch(e) {} }
+    if (count === 0) {
+      clearInterval(timer);
+      mc.innerHTML = `<button class="btn btn-red btn-lg" onclick="stopAndScore()">🎙️ I'M DONE!</button>`;
+    } else {
+      const cd = mc.querySelector('.countdown-disp');
+      if (cd) cd.textContent = count;
+    }
+  }, 1000);
+}
+
+function stopAndScore() {
+  if (!recognition) return;
+  isManuallyStopping = true;
+  try { recognition.stop(); } catch(e) {}
+  resetMic();
+  setTimeout(() => processReading(capturedTranscript), 400);
+}
+
+function resetMic() {
+  const mc = document.getElementById('mic-controls');
+  if (mc) mc.innerHTML = `<button class="btn btn-green btn-lg" onclick="startListening()">🎤 START READING</button>`;
+}
+
+// ════════════════════════════════════════════════════════
+//  SCORING
+// ════════════════════════════════════════════════════════
+function normalize(text) {
+  if (!text) return [];
+  return text.toLowerCase()
+    .replace(/[^a-z0-9'\s]/g, ' ')
+    .replace(/\s+/g, ' ').trim()
+    .split(' ').filter(w => w.length > 0);
+}
+
+function processReading(transcript) {
+  if (!currentBook || !transcript) {
+    renderResults({ accuracy: 0, isSuccess: false, feedback: [], advanced: false, regressed: false });
+    return;
+  }
+  const expected = normalize(currentBook.text);
+  const actual   = normalize(transcript);
+  let correct = 0;
+  const feedback = expected.map(word => {
+    const ok = actual.includes(word);
+    if (ok) correct++;
+    return { word, ok };
+  });
+  const accuracy   = expected.length > 0 ? correct / expected.length : 0;
+  const isSuccess  = accuracy >= ACCURACY_OK;
+  const isBad      = accuracy < ACCURACY_FAIL;
+
+  let newLvl  = levelIdx;
+  let newSucc = isSuccess ? successStreak + 1 : 0;
+  let newFail = isBad    ? failStreak + 1     : 0;
+  let advanced = false, regressed = false;
+
+  if (isSuccess && newSucc >= STREAK_UP) {
+    newLvl   = Math.min(levelIdx + 1, LEVELS.length - 1);
+    newSucc  = 0; newFail = 0; advanced = true; storyIdx = 0;
+  } else if (newFail >= STREAK_DOWN) {
+    newLvl   = Math.max(0, levelIdx - 1);
+    newSucc  = 0; newFail = 0; regressed = true; storyIdx = 0;
+  }
+
+  levelIdx = newLvl; successStreak = newSucc; failStreak = newFail;
+  updateHeader();
+  renderResults({ accuracy, isSuccess, feedback, advanced, regressed });
+}
+
+// ════════════════════════════════════════════════════════
+//  RESULTS
+// ════════════════════════════════════════════════════════
+function renderResults({ accuracy, isSuccess, feedback, advanced, regressed }) {
+  const pct  = Math.round(accuracy * 100);
+  const area = document.getElementById('results-area');
+  area.style.display = 'block';
+
+  const chips = feedback.length > 0
+    ? feedback.map(f =>
+        `<span class="wchip ${f.ok ? 'ok' : 'bad'}">${esc(f.word)}</span>`
+      ).join(' ')
+    : '<span style="color:#94a3b8;font-weight:700;">No speech detected — try again!</span>';
+
+  // Specific feedback message
+  let feedbackMsg = '';
+  if (pct === 100) feedbackMsg = '🏆 Perfect reading! Every word was spot on!';
+  else if (pct >= 95) feedbackMsg = '⭐ Nearly perfect! Just a couple of words to work on.';
+  else if (pct >= 90) feedbackMsg = '✅ Great reading! You\'re ready to level up soon.';
+  else if (pct >= 80) feedbackMsg = '👍 Good effort! Try reading a little more slowly and clearly.';
+  else if (pct >= 70) feedbackMsg = '📖 Keep practicing! Try pointing to each word as you read.';
+  else feedbackMsg = '💡 Let\'s try again. Read slowly and say every word you see.';
+
+  let banner = '';
+  if (advanced) banner = `<div class="banner up">🎉 LEVEL UP! Moving to Level ${LEVELS[levelIdx].label} — ${LEVELS[levelIdx].desc}</div>`;
+  if (regressed) banner = `<div class="banner down">🔄 Let's keep practicing at Level ${LEVELS[levelIdx].label}</div>`;
+
+  area.innerHTML = `
+    <div class="results-card ${isSuccess ? 'success' : 'fail'} slide-up">
+      <div class="score-row">
+        <div>
+          <div class="score-num">${pct}%</div>
+          <div class="score-lbl">Accuracy Score</div>
+        </div>
+        <div class="badge ${isSuccess ? 's' : 'f'}">${isSuccess ? '⭐ Great!' : '💪 Try Again!'}</div>
+      </div>
+
+      <div style="background:rgba(255,255,255,0.7);border-radius:13px;padding:12px 15px;margin-bottom:15px;font-weight:700;font-size:.9rem;color:#374151;">
+        ${feedbackMsg}
+      </div>
+
+      <div style="font-size:.75rem;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">Word by Word</div>
+      <div class="word-feedback">${chips}</div>
+
+      <div class="action-row">
+        <button class="btn btn-blue"   onclick="loadStory()">📖 Next Story</button>
+        <button class="btn btn-green"  onclick="loadStory()">🔄 Try Again</button>
+        <button class="btn btn-ghost"  onclick="showLevelPicker()" style="font-size:.85rem;">🎯 Change Level</button>
+      </div>
+      ${banner}
+    </div>`;
+
+  area.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ════════════════════════════════════════════════════════
+//  UTILITY
+// ════════════════════════════════════════════════════════
+function esc(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ════════════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════════════
+buildLevelGrid();
+initSpeech();
+</script>
+</body>
+</html>
